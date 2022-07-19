@@ -1,0 +1,294 @@
+{
+  "/contracts": {
+    "get": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#list_contracts",
+      "operationId": "listContracts",
+      "tags": ["contracts"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "contract_id",
+          "in": "query",
+          "description": "Search on contract id",
+          "required": false,
+          "type": "integer"
+      }, {
+        "description": "Matching criteria",
+        "enum": [
+          "contains",
+          "exact",
+          "starts_with",
+          "ends_with"
+        ],
+        "in": "query",
+        "name": "_match",
+        "required": false,
+        "type": "string"
+      }, {
+        "collectionFormat": "csv",
+        "description": "Sorting criteria",
+        "in": "query",
+        "items": {
+          "type": "string"
+        },
+        "name": "_order_by",
+        "required": false,
+        "type": "array"
+      }, {
+        "description": "Page number, for paginated object listing",
+        "in": "query",
+        "name": "_page",
+        "required": false,
+        "type": "integer"
+      }, {
+        "description": "Query filter sent through request\"s body",
+        "in": "body",
+        "name": "query",
+        "required": false,
+        "schema": {
+          "type": "object"
+        }
+      }, {
+        "description": "Query filter sent as a request header",
+        "in": "header",
+        "name": "x-koha-query",
+        "required": false,
+        "type": "string"
+      }, {
+        "description": "Query filter sent as a request parameter",
+        "in": "query",
+        "name": "q",
+        "required": false,
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "collectionFormat": "multi"
+      }, {
+        "description": "Request id header",
+        "in": "header",
+        "name": "x-koha-request-id",
+        "required": false,
+        "type": "integer"
+      }
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of contracts"
+        }
+      }
+    }
+  },
+  "/permissions": {
+    "get": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#list_permissions",
+      "operationId": "listPermissions",
+      "tags": ["contracts"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "permission_id",
+          "in": "query",
+          "description": "Search on permission id",
+          "required": false,
+          "type": "integer"
+      }, {
+          "name": "contract_id",
+          "in": "query",
+          "description": "Search on contract id",
+          "required": false,
+          "type": "integer"
+      }, {
+          "name": "permission_type",
+          "in": "query",
+          "description": "Search on permission typr",
+          "required": false,
+          "type": "string"
+      }, {
+          "name": "permission_code",
+          "in": "query",
+          "description": "Search on permission code",
+          "required": false,
+          "type": "string"
+      }, {
+          "name": "permission_date",
+          "in": "query",
+          "description": "Search on permission date",
+          "required": false,
+          "type": "string"
+      }, {
+          "name": "form_signed",
+          "in": "query",
+          "description": "Search on form signed",
+          "required": false,
+          "type": "boolean"
+      }, {
+          "name": "note",
+          "in": "query",
+          "description": "Search on permission note",
+          "required": false,
+          "type": "string"
+      }, {
+        "description": "Matching criteria",
+        "enum": [
+          "contains",
+          "exact",
+          "starts_with",
+          "ends_with"
+        ],
+        "in": "query",
+        "name": "_match",
+        "required": false,
+        "type": "string"
+      }, {
+        "collectionFormat": "csv",
+        "description": "Sorting criteria",
+        "in": "query",
+        "items": {
+          "type": "string"
+        },
+        "name": "_order_by",
+        "required": false,
+        "type": "array"
+      }, {
+        "description": "Page number, for paginated object listing",
+        "in": "query",
+        "name": "_page",
+        "required": false,
+        "type": "integer"
+      }, {
+        "description": "Query filter sent through request\"s body",
+        "in": "body",
+        "name": "query",
+        "required": false,
+        "schema": {
+          "type": "object"
+        }
+      }, {
+        "description": "Query filter sent as a request header",
+        "in": "header",
+        "name": "x-koha-query",
+        "required": false,
+        "type": "string"
+      }, {
+        "description": "Query filter sent as a request parameter",
+        "in": "query",
+        "name": "q",
+        "required": false,
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "collectionFormat": "multi"
+      }, {
+        "description": "Request id header",
+        "in": "header",
+        "name": "x-koha-request-id",
+        "required": false,
+        "type": "integer"
+      }
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of contract permissions"
+        }
+      }
+    }
+  },
+  "/resources": {
+    "get": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#list_resources",
+      "operationId": "listContractResources",
+      "tags": ["contracts"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "resource_id",
+          "in": "query",
+          "description": "Search on resource id",
+          "required": false,
+          "type": "integer"
+      }, {
+          "name": "permission_id",
+          "in": "query",
+          "description": "Search on permission id",
+          "required": false,
+          "type": "integer"
+      }, {
+          "name": "biblionumber",
+          "in": "query",
+          "description": "Search on biblionumber",
+          "required": false,
+          "type": "integer"
+      }, {
+        "description": "Matching criteria",
+        "enum": [
+          "contains",
+          "exact",
+          "starts_with",
+          "ends_with"
+        ],
+        "in": "query",
+        "name": "_match",
+        "required": false,
+        "type": "string"
+      }, {
+        "collectionFormat": "csv",
+        "description": "Sorting criteria",
+        "in": "query",
+        "items": {
+          "type": "string"
+        },
+        "name": "_order_by",
+        "required": false,
+        "type": "array"
+      }, {
+        "description": "Page number, for paginated object listing",
+        "in": "query",
+        "name": "_page",
+        "required": false,
+        "type": "integer"
+      }, {
+        "description": "Query filter sent through request\"s body",
+        "in": "body",
+        "name": "query",
+        "required": false,
+        "schema": {
+          "type": "object"
+        }
+      }, {
+        "description": "Query filter sent as a request header",
+        "in": "header",
+        "name": "x-koha-query",
+        "required": false,
+        "type": "string"
+      }, {
+        "description": "Query filter sent as a request parameter",
+        "in": "query",
+        "name": "q",
+        "required": false,
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "collectionFormat": "multi"
+      }, {
+        "description": "Request id header",
+        "in": "header",
+        "name": "x-koha-request-id",
+        "required": false,
+        "type": "integer"
+      }
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of contract resources"
+        }
+      }
+    }
+  }
+
+}
