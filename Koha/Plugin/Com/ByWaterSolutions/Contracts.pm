@@ -36,6 +36,8 @@ BEGIN {
     require Koha::Schema::Result::KohaPluginComBywatersolutionsContractsPermission;
     require Koha::Schema::Result::KohaPluginComBywatersolutionsContractsResource;
     require Koha::Contracts;
+    require Koha::ContractPermissions;
+
 
     # register the additional schema classes
     Koha::Schema->register_class(KohaPluginComBywatersolutionsContractsContract => 'Koha::Schema::Result::KohaPluginComBywatersolutionsContractsContract');
@@ -110,6 +112,24 @@ sub install {
     }
 
     return 1;
+}
+
+sub tool {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    $self->tool_step_1();
+}
+
+sub tool_step_1 {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    my $template = $self->get_template({ file => 'contracts.tt' });
+    my $count = Koha::Contracts->search()->count;
+    $template->param( contracts_count => $count );
+    print $cgi->header();
+    print $template->output();
 }
 
 sub upgrade {
@@ -234,8 +254,9 @@ sub intranet_js {
 sub api_routes {
     my ( $self, $args ) = @_;
 
-    my $spec_str = $self->mbf_read('openapi.json');
-    my $spec     = decode_json($spec_str);
+    my $contracts_spec_str = $self->mbf_read('openapi.json');
+    my $permissions_spec_str = $self->mbf_read('permissions.json');
+    my $spec     = { %{decode_json($contracts_spec_str)}, %{decode_json($permissions_spec_str)} };
 
     return $spec;
 }

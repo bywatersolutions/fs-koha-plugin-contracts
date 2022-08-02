@@ -42,6 +42,12 @@
         "required": false,
         "type": "integer"
       }, {
+        "description": "Number per page, for paginated object listing",
+        "in": "query",
+        "name": "_per_page",
+        "required": false,
+        "type": "integer"
+      }, {
         "description": "Query filter sent through request\"s body",
         "in": "body",
         "name": "query",
@@ -71,7 +77,52 @@
         "name": "x-koha-request-id",
         "required": false,
         "type": "integer"
+      }, {
+        "description": "Embed header",
+        "in": "header",
+        "name": "x-koha-embed",
+        "required": false,
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+              "permissions"
+          ]
+        }
       }
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of contracts"
+        }
+      }
+    },
+    "post": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#add_contract",
+      "operationId": "addContract",
+      "tags": ["contracts"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "body",
+          "in": "body",
+          "description": "New contract object",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "contract_number": {
+              "description": "Contract number",
+              "type": "string"
+              },
+              "supplier_id": {
+              "description": "Supplier id",
+              "type": "string"
+              }
+            }
+          }
+        }
       ],
       "responses": {
         "200": {
@@ -80,119 +131,88 @@
       }
     }
   },
-  "/permissions": {
+  "/contracts/{contract_id}": {
     "get": {
-      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#list_permissions",
-      "operationId": "listPermissions",
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#get_contract",
+      "operationId": "getContract",
       "tags": ["contracts"],
       "produces": [
         "application/json"
       ],
       "parameters": [{
-          "name": "permission_id",
-          "in": "query",
-          "description": "Search on permission id",
-          "required": false,
-          "type": "integer"
-      }, {
           "name": "contract_id",
-          "in": "query",
+          "in": "path",
           "description": "Search on contract id",
-          "required": false,
+          "required": true,
           "type": "integer"
-      }, {
-          "name": "permission_type",
-          "in": "query",
-          "description": "Search on permission typr",
-          "required": false,
-          "type": "string"
-      }, {
-          "name": "permission_code",
-          "in": "query",
-          "description": "Search on permission code",
-          "required": false,
-          "type": "string"
-      }, {
-          "name": "permission_date",
-          "in": "query",
-          "description": "Search on permission date",
-          "required": false,
-          "type": "string"
-      }, {
-          "name": "form_signed",
-          "in": "query",
-          "description": "Search on form signed",
-          "required": false,
-          "type": "boolean"
-      }, {
-          "name": "note",
-          "in": "query",
-          "description": "Search on permission note",
-          "required": false,
-          "type": "string"
-      }, {
-        "description": "Matching criteria",
-        "enum": [
-          "contains",
-          "exact",
-          "starts_with",
-          "ends_with"
-        ],
-        "in": "query",
-        "name": "_match",
-        "required": false,
-        "type": "string"
-      }, {
-        "collectionFormat": "csv",
-        "description": "Sorting criteria",
-        "in": "query",
-        "items": {
-          "type": "string"
-        },
-        "name": "_order_by",
-        "required": false,
-        "type": "array"
-      }, {
-        "description": "Page number, for paginated object listing",
-        "in": "query",
-        "name": "_page",
-        "required": false,
-        "type": "integer"
-      }, {
-        "description": "Query filter sent through request\"s body",
-        "in": "body",
-        "name": "query",
-        "required": false,
-        "schema": {
-          "type": "object"
         }
-      }, {
-        "description": "Query filter sent as a request header",
-        "in": "header",
-        "name": "x-koha-query",
-        "required": false,
-        "type": "string"
-      }, {
-        "description": "Query filter sent as a request parameter",
-        "in": "query",
-        "name": "q",
-        "required": false,
-        "type": "array",
-        "items": {
-          "type": "string"
-        },
-        "collectionFormat": "multi"
-      }, {
-        "description": "Request id header",
-        "in": "header",
-        "name": "x-koha-request-id",
-        "required": false,
-        "type": "integer"
-      }
       ],
       "responses": {
         "200": {
-          "description": "A list of contract permissions"
+          "description": "A list of contracts"
+        }
+      }
+    },
+    "put": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#update_contract",
+      "operationId": "updateContract",
+      "tags": ["contracts"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "contract_id",
+          "in": "path",
+          "description": "Search on contract id",
+          "required": true,
+          "type": "integer"
+        },{
+          "name": "body",
+          "in": "body",
+          "description": "Updated supplier id",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "contract_number": {
+              "description": "Updated contract number",
+              "type": "string"
+              },
+              "supplier_id": {
+              "description": "Updated supplier id",
+              "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "produces": [
+        "application/json"
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of contracts"
+        }
+      }
+    },
+    "delete": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#delete_contract",
+      "operationId": "deleteContract",
+      "tags": ["contracts"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "contract_id",
+          "in": "path",
+          "description": "Contract id to delete",
+          "required": true,
+          "type": "integer"
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Contract deleted"
         }
       }
     }
@@ -249,6 +269,12 @@
         "description": "Page number, for paginated object listing",
         "in": "query",
         "name": "_page",
+        "required": false,
+        "type": "integer"
+      }, {
+        "description": "Number per page, for paginated object listing",
+        "in": "query",
+        "name": "_per_page",
         "required": false,
         "type": "integer"
       }, {

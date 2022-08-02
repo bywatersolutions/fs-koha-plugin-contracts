@@ -24,6 +24,7 @@ use Koha::Database;
 use base qw(Koha::Object);
 
 use Koha::Acquisition::Bookseller;
+use Koha::ContractPermissions;
 
 =head1 NAME
 Koha::CurbsidePickup - Koha Curbside Pickup Object class
@@ -39,6 +40,17 @@ sub copyright_holder {
     my $rs = $self->_result->supplier_id;
     return unless $rs;
     return Koha::Acquisition::Bookseller->_new_from_dbic( $rs );
+}
+
+=head3 permissions
+Return the permissions linked to this contract
+=cut
+
+sub permissions {
+    my ( $self ) = @_;
+    my $rs = $self->_result->koha_plugin_com_bywatersolutions_contracts_permissions;
+    return unless $rs;
+    return Koha::ContractPermissions->_new_from_dbic( $rs );
 }
 
 =head2 Internal methods
