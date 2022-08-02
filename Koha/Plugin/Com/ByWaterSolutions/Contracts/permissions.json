@@ -1,0 +1,240 @@
+{
+  "/permissions": {
+    "get": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#list_permissions",
+      "operationId": "listPermissions",
+      "tags": ["permissions"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "permission_id",
+          "in": "query",
+          "description": "Search on permission id",
+          "required": false,
+          "type": "integer"
+      }, {
+        "description": "Matching criteria",
+        "enum": [
+          "contains",
+          "exact",
+          "starts_with",
+          "ends_with"
+        ],
+        "in": "query",
+        "name": "_match",
+        "required": false,
+        "type": "string"
+      }, {
+        "collectionFormat": "csv",
+        "description": "Sorting criteria",
+        "in": "query",
+        "items": {
+          "type": "string"
+        },
+        "name": "_order_by",
+        "required": false,
+        "type": "array"
+      }, {
+        "description": "Page number, for paginated object listing",
+        "in": "query",
+        "name": "_page",
+        "required": false,
+        "type": "integer"
+      }, {
+        "description": "Number per page, for paginated object listing",
+        "in": "query",
+        "name": "_per_page",
+        "required": false,
+        "type": "integer"
+      }, {
+        "description": "Query filter sent through request\"s body",
+        "in": "body",
+        "name": "query",
+        "required": false,
+        "schema": {
+          "type": "object"
+        }
+      }, {
+        "description": "Query filter sent as a request header",
+        "in": "header",
+        "name": "x-koha-query",
+        "required": false,
+        "type": "string"
+      }, {
+        "description": "Query filter sent as a request parameter",
+        "in": "query",
+        "name": "q",
+        "required": false,
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "collectionFormat": "multi"
+      }, {
+        "description": "Request id header",
+        "in": "header",
+        "name": "x-koha-request-id",
+        "required": false,
+        "type": "integer"
+      }
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of permissions"
+        }
+      }
+    },
+    "post": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#add_permission",
+      "operationId": "addPermission",
+      "tags": ["permissions"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "body",
+          "in": "body",
+          "description": "New permission object",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "contract_id": {
+                "description": "Permission contract id",
+                "type": "integer"
+              },
+              "permission_type": {
+                "description": "Search on permission typr",
+                "type": "string"
+              },
+              "permission_code": {
+                "description": "Search on permission code",
+                "type": "string"
+              },
+              "permission_date": {
+                "description": "Search on permission date",
+                "type": "string"
+              },
+              "form_signed": {
+                "description": "Search on form signed",
+                "type": "boolean"
+              },
+              "note": {
+                "description": "Search on permission note",
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of permissions"
+        }
+      }
+    }
+  },
+  "/permissions/{permission_id}": {
+    "get": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#get_permission",
+      "operationId": "getPermission",
+      "tags": ["permissions"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "permission_id",
+          "in": "path",
+          "description": "Search on permission id",
+          "required": true,
+          "type": "integer"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of permissions"
+        }
+      }
+    },
+    "put": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#update_permission",
+      "operationId": "updatePermission",
+      "tags": ["permissions"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "permission_id",
+          "in": "path",
+          "description": "Search on permission id",
+          "required": true,
+          "type": "integer"
+        },{
+          "name": "body",
+          "in": "body",
+          "description": "Updated supplier id",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "contract_id": {
+                "description": "Permission contract id",
+                "type": "integer"
+              },
+              "permission_type": {
+                "description": "Search on permission typr",
+                "type": "string"
+              },
+              "permission_code": {
+                "description": "Search on permission code",
+                "type": "string"
+              },
+              "permission_date": {
+                "description": "Search on permission date",
+                "type": "string"
+              },
+              "form_signed": {
+                "description": "Search on form signed",
+                "type": "boolean"
+              },
+              "note": {
+                "description": "Search on permission note",
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "produces": [
+        "application/json"
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of permissions"
+        }
+      }
+    },
+    "delete": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#delete_permission",
+      "operationId": "deletePermission",
+      "tags": ["permissions"],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [{
+          "name": "permission_id",
+          "in": "path",
+          "description": "Permission id to delete",
+          "required": true,
+          "type": "integer"
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Permission deleted"
+        }
+      }
+    }
+  }
+}

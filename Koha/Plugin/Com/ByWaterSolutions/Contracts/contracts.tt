@@ -1,0 +1,260 @@
+[% USE raw %]
+[% USE Asset %]
+[% SET footerjs = 1 %]
+[% USE AuthorisedValues %]
+[% INCLUDE 'doc-head-open.inc' %]
+  <title>Koha: Contracts plugin: Search contracts</title>
+  [% INCLUDE 'doc-head-close.inc' %]
+</head>
+
+<body id="plugin_contracts">
+  [% INCLUDE 'header.inc' %]
+  [% INCLUDE 'cat-search.inc' %]
+
+<nav id="breadcrumbs" aria-label="Breadcrumb" class="breadcrumb">
+    <ol>
+        <li>
+            <a href="/cgi-bin/koha/mainpage.pl">Home</a>
+        </li>
+        <li>
+            <a href="/cgi-bin/koha/plugins/plugins.pl">Plugins</a>
+        </li>
+        <li>
+            <a href="#" aria-current="page">
+                Koha Contracts Plugin
+            </a>
+        </li>
+    </ol>
+</nav>
+
+<div class="main container-fluid">
+    <div class="row">
+        <div class="col-sm-10 col-sm-push-2">
+            <main>
+
+        [% IF contracts_count %]
+            <div id="contracts_list">
+                <h2>Contracts</h2>
+                    <a class="btn btn-default btn-xs edit_contract" onclick="ContractFunctions.edit_contract(this)" data-contract_id="new" data-contract_number="">
+                    <i class="fa fa-plus"></i> New contract
+                    </a>
+                <table id="contracts_table">
+                    <thead>
+                        <tr>
+                            <th>Contract Id</th>
+                            <th>Supplier Id</th>
+                            <th>Contract Number</th>
+                            <th>Created On</th>
+                            <th>Created By</th>
+                            <th>Updated On</th>
+                            <th>Updated By</th>
+                            <th>&nbsp;</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        [% ELSE %]
+            <div class="dialog message">
+                There are no contracts defined.
+            </div>
+        [% END %]
+
+            </main>
+        </div> <!-- /.col-sm-10.col-sm-push-2 -->
+
+     </div> <!-- /.row -->
+
+    <div id="edit_contract_modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">×</button>
+                <h3 id="search_filters_label">Edit contract: <span id="contract_edit_modal_name"></span</h3>
+            </div>
+            <div class="modal-body">
+                <div class="contract-edit" data-type="update_contract">
+                <input type="hidden" id="contract_edit_id" name="contract_edit_id">
+                <label for="contract_edit_number">Number:</label>
+                <input id="contract_edit_number" name="contract_edit_number" type="text" class="contract_update">
+                <hr>
+                <a id="replace_existing_contract" class="btn btn-default btn-xs" href="#">Update</a>
+                </div>
+                <div class="permission-edit" data-type="update_permission">
+                <input type="hidden" id="contract_edit_id" name="contract_edit_id">
+                <input type="hidden" id="permission_edit_id" name="permission_edit_id">
+                <label for="permission_edit_type">Number:</label>
+                <input id="permission_edit_type" name="permission_edit_type" type="text" class="contract_update">
+                <hr>
+                <a id="replace_existing_contract" class="btn btn-default btn-xs" href="#">Update</a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" aria-hidden="true" class="cancel">Cancel</a>
+            </div>
+        </div>
+        </div>
+    </div>
+
+[% MACRO jsinclude BLOCK %]
+    [% Asset.js("js/admin-menu.js") | $raw %]
+    [% Asset.css("css/humanmsg.css") | $raw %]
+    [% Asset.js("lib/jquery/plugins/humanmsg.js") | $raw %]
+    [% INCLUDE 'datatables.inc' %]
+
+    <script>
+        let filters_table;
+        $(document).ready(function(){
+            contracts_table = $("#contracts_table").kohaTable({
+                "ajax": {
+                    "url": "/api/v1/contrib/contracts/contracts"
+                },
+                "columns": [
+                    {
+                        "data": "contract_id",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "supplier_id",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "contract_number",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "created_on",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "created_user",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "updated_on",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "updated_user",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": function( row, meta, val, type ) {
+                            let contract = row;
+                            let contract_buttons = '<a class="btn btn-default btn-xs edit_contract" onclick="ContractFunctions.edit_contract(this)"';
+                            contract_buttons += ' data-contract_id="'+ contract.contract_id;
+                            contract_buttons += '" data-contract_number="'+ contract.contract_number;
+                            contract_buttons += '" ><i class="fa fa-pencil"></i> Edit contract</a>';
+                            contract_buttons += '<a class="btn btn-default btn-xs delete_contract" onclick="ContractFunctions.delete_contract(this)"';
+                            contract_buttons += ' data-contract_id="'+ contract.contract_id;
+                            contract_buttons += '"><i class="fa fa-trash"></i> Delete</a>';
+                            return contract_buttons;
+                        },
+                        "searchable": false,
+                        "orderable": false
+                    }
+                ],
+                "embed": ["permissions"] 
+            }, null, 1);
+
+            $("body").on('change', '.contract_update',function() {
+                let parent_form = $(this).parent('div');
+                let parent_type = parent_form.data('type');
+                ContractFunctions[parent_type](parent_form);
+            });
+                
+
+        });
+
+        var ContractFunctions = {
+
+            edit_contract:  function(element){
+                console.log( $(element) );
+                let contract_id = $(element).data('contract_id');
+                let contract_number = $(element).data('contract_number');
+                console.log( contract_id , contract_number );
+                $("#contract_edit_number").val(contract_number);
+                $("#contract_edit_id").val(contract_id);
+                $("#edit_contract_modal").modal('show');
+            },
+
+            delete_contract: function(element){
+                let contract_id = $(element).data('contract_id');
+                console.log(contract_id);
+                let options = {
+                    url: '/api/v1/contrib/contracts/contracts/' + contract_id,
+                    method: "DELETE",
+                    contentType: "application/json",
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        humanMsg.displayAlert( _("Contract successfully deleted."), { className: 'human Success' } );
+                        contracts_table.DataTable().ajax.reload();
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error during deletion:") + err.responseText, { className: 'humanError' } );
+                    });
+            },
+
+            update_contract: function(element){
+                let contract_id = $(element).children('input[name="contract_edit_id"]').val();
+                var url = '/api/v1/contrib/contracts/contracts';
+                var method = "PUT";
+                if( contract_id == 'new' ){
+                    method = "POST";
+                } else {
+                    url = url + '/' + contract_id
+                }
+                let contract_number = $(element).children('input[name="contract_edit_number"]').val();
+                console.log( contract_number );
+                let options = {
+                    url: url,
+                    method: method,
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        contract_number: contract_number,
+                    })
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        humanMsg.displayAlert( _("Contract successfully updated."), { className: 'human Success' } );
+                        contracts_table.DataTable().ajax.reload();
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error during update:") + err.responseText, { className: 'humanError' } );
+                    });
+            }
+        };
+
+
+        function save_contract(id,contract_number){
+            let options = {
+                url: '/api/v1/contrib/contracts/contracts/' + id,
+                method: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    contract_number: contract_number,
+                })
+            };
+            $.ajax(options)
+                .then(function(result) {
+                    $("#edit_contract_modal").modal('hide');
+                    humanMsg.displayAlert( _("Saved contract: ") + contract_number  , { className: 'human Success' } );
+                    filters_table.DataTable().ajax.reload();
+                })
+                .fail(function(err) {
+                    humanMsg.displayAlert( _("There was an error during saving:") + err.responseText, { className: 'humanError' } );
+                });
+        }
+
+
+    </script>
+[% END %]
+
+[% INCLUDE 'intranet-bottom.inc' %]

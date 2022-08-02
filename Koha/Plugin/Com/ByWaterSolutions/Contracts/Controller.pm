@@ -53,6 +53,37 @@ sub list_contracts {
     };
 }
 
+sub list_permissions {
+    my $c = shift->openapi->valid_input or return;
+    return try {
+        my $permissions_set = Koha::ContractPermissions->search({});
+        my $permissions = $c->objects->search( $permissions_set );
+        return $c->render(
+            status  => 200,
+            openapi => $permissions
+        );
+    }
+    catch {
+        $c->unhandled_exception($_);
+    };
+}
+
+sub get_permission {
+    my $c = shift->openapi->valid_input or return;
+
+    my $permission_id = $c->validation->param('permission_id');
+    return try {
+        my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
+        return $c->render(
+            status  => 200,
+            openapi => $permission
+        );
+    }
+    catch {
+        $c->unhandled_exception($_);
+    };
+}
+
 sub get_contract {
     my $c = shift->openapi->valid_input or return;
 
@@ -135,21 +166,6 @@ sub delete_contract {
         return $c->render(
             status  => 204,
             openapi => $contract
-        );
-    }
-    catch {
-        $c->unhandled_exception($_);
-    };
-}
-
-sub list_permissions {
-    my $c = shift->openapi->valid_input or return;
-    return try {
-        my $permissions_set = Koha::Contracts->search({});
-        my $permissions = $c->objects->search( $permissions_set );
-        return $c->render(
-            status  => 200,
-            openapi => $permissions
         );
     }
     catch {
