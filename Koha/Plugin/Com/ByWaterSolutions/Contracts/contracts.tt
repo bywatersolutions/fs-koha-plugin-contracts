@@ -44,6 +44,7 @@
                             <th>Contract Id</th>
                             <th>Supplier Id</th>
                             <th>Contract Number</th>
+                            <th>Permissions</th>
                             <th>Created On</th>
                             <th>Created By</th>
                             <th>Updated On</th>
@@ -79,14 +80,8 @@
                 <hr>
                 <a id="replace_existing_contract" class="btn btn-default btn-xs" href="#">Update</a>
                 </div>
-                <div class="permission-edit" data-type="update_permission">
-                <input type="hidden" id="contract_edit_id" name="contract_edit_id">
-                <input type="hidden" id="permission_edit_id" name="permission_edit_id">
-                <label for="permission_edit_type">Number:</label>
-                <input id="permission_edit_type" name="permission_edit_type" type="text" class="contract_update">
-                <hr>
-                <a id="replace_existing_contract" class="btn btn-default btn-xs" href="#">Update</a>
-                </div>
+                <fieldset id="permissions_editor">
+                </fieldset>
             </div>
             <div class="modal-footer">
                 <a href="#" data-dismiss="modal" aria-hidden="true" class="cancel">Cancel</a>
@@ -103,7 +98,24 @@
 
     <script>
         let filters_table;
+        //============Test
         $(document).ready(function(){
+                let options = {
+                    url: '/api/v1/contrib/contracts/resources',
+                    method: "GET",
+                    contentType: "application/json",
+                    headers: { "x-koha-embed" : "permission" },
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        console.log("================");
+                        console.log( result );
+                        console.log("================");
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error fetching the resources") + err.responseText, { className: 'humanError' } );
+                    });
+        //===================
             contracts_table = $("#contracts_table").kohaTable({
                 "ajax": {
                     "url": "/api/v1/contrib/contracts/contracts"
@@ -123,6 +135,18 @@
                         "data": "contract_number",
                         "searchable": true,
                         "orderable": true
+                    },
+                    {
+                        "data": function( row, meta, val, type ) {
+                            var perms ="";
+                            console.log(row.permissions );
+                            row.permissions.forEach(function(e){
+                                perms += e.permission_id + " " + e.permission_type + " " + e.permission_code + "</br>";
+                            });
+                            return perms;
+                        },
+                        "searchable": false,
+                        "orderable": true,
                     },
                     {
                         "data": "created_on",
@@ -178,10 +202,25 @@
                 console.log( $(element) );
                 let contract_id = $(element).data('contract_id');
                 let contract_number = $(element).data('contract_number');
-                console.log( contract_id , contract_number );
-                $("#contract_edit_number").val(contract_number);
-                $("#contract_edit_id").val(contract_id);
-                $("#edit_contract_modal").modal('show');
+
+                let options = {
+                    url: '/api/v1/contrib/contracts/contracts/' + contract_id,
+                    method: "GET",
+                    contentType: "application/json",
+                    headers: { 'embed': '["permissions"]' },
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        $("#contract_edit_number").val(result.contract_number);
+                        $("#contract_edit_id").val(result.contract_id);
+                        ContractFunctions.get_permissions( result.contract_id );
+
+                        $("#edit_contract_modal").modal('show');
+
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error fetching the contract") + err.responseText, { className: 'humanError' } );
+                    });
             },
 
             delete_contract: function(element){
@@ -229,7 +268,62 @@
                     .fail(function(err) {
                         humanMsg.displayAlert( _("There was an error during update:") + err.responseText, { className: 'humanError' } );
                     });
+            },
+
+            update_permission: function(element){
+                let permission_id = $(element).children('input[name="permission_edit_id"]').val();
+                var url = '/api/v1/contrib/contracts/permissions';
+                var method = "PUT";
+                if( permission_id == 'new' ){
+                    method = "POST";
+                } else {
+                    url = url + '/' + permission_id
+                }
+                let permission_type = $(element).children('input[name="permission_edit_type"]').val();
+                console.log( permission_type );
+                let options = {
+                    url: url,
+                    method: method,
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        permission_type: permission_type,
+                    })
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        humanMsg.displayAlert( _("Permission successfully updated."), { className: 'human Success' } );
+                        contracts_table.DataTable().ajax.reload();
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error during update:") + err.responseText, { className: 'humanError' } );
+                    });
+            },
+
+            get_permissions: function( contract_id ){
+                let options = {
+                    url: '/api/v1/contrib/contracts/permissions?contract_id='+contract_id,
+                    method: 'GET',
+                    contentType: "application/json",
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                            console.log(result);
+                        let permissions_section = '<hr>';
+                        result.forEach(function(p){
+                            permissions_section += '<div class="permission-edit" data-type="update_permission">';
+                            permissions_section += '<input type="hidden" id="contract_edit_id" name="contract_edit_id">';
+                            permissions_section += '<input type="hidden" id="permission_edit_id" name="permission_edit_id" value="'+p.permission_id+'">';
+                            permissions_section += '<label for="permission_edit_type">Permission type:</label>';
+                            permissions_section += '<input id="permission_edit_type" name="permission_edit_type" type="text" class="contract_update" value="'+p.permission_type +'">';
+                            permissions_section += '<hr><a id="replace_existing_contract" class="btn btn-default btn-xs" href="#">Update</a></div><hr>';
+                        });
+                        $("#permissions_editor").html(permissions_section);
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error fetching permissions") + err.responseText, { className: 'humanError' } );
+                    });
             }
+
         };
 
 

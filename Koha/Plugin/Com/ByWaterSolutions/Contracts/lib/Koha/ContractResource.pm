@@ -20,6 +20,7 @@ use Modern::Perl;
 use Carp;
 
 use Koha::Database;
+use Koha::ContractPermissions;
 
 use base qw(Koha::Object);
 
@@ -40,12 +41,37 @@ sub copyright_holder {
     return Koha::Acquisition::Bookseller->_new_from_dbic( $rs );
 }
 
+=head3 permissions
+
+Return the permission linked to this resource
+
+=cut
+
+sub permission {
+    my ( $self ) = @_;
+    my $rs = $self->_result->permission;
+    return unless $rs;
+    return Koha::ContractPermission->_new_from_dbic( $rs );
+}
+
+=head3 contract
+
+Return the contract linked to this resource
+
+=cut
+
+sub contract {
+    my ( $self ) = @_;
+    my $rs = $self->_result->permission->contract;
+    return unless $rs;
+    return Koha::Contract->_new_from_dbic( $rs );
+}
 =head2 Internal methods
 =head3 _type
 =cut
 
 sub _type {
-    return 'KohaPluginComBywatersolutionsContractsContractResource';
+    return 'KohaPluginComBywatersolutionsContractsResource';
 }
 
 1;

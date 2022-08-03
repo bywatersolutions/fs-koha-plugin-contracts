@@ -20,7 +20,7 @@ Koha::Contracts - Koha Contracts Object set class
 =cut
 
 sub _type {
-        return 'KohaPluginComBywatersolutionsContractsContractResource';
+        return 'KohaPluginComBywatersolutionsContractsResource';
 }
 
 =head3 object_class

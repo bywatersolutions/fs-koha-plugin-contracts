@@ -27,7 +27,7 @@ use Koha::Acquisition::Bookseller;
 use Koha::ContractPermissions;
 
 =head1 NAME
-Koha::CurbsidePickup - Koha Curbside Pickup Object class
+Koha::Contract - Koha Contract Object class
 =head1 API
 =head2 Class methods
 

@@ -84,6 +84,31 @@ sub get_permission {
     };
 }
 
+sub update_permission {
+    my $c = shift->openapi->valid_input or return;
+
+    my $permission_id = $c->validation->param('permission_id');
+    my $permission_type= $c->validation->param('body')->{'permission_type'};
+    my $permission_code= $c->validation->param('body')->{'permission_code'};
+    my $patron = $c->stash('koha.user');
+    return try {
+        my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
+
+        $permission->permission_type( $permission_type ) if $permission_type;
+        $permission->permission_code( $permission_code ) if $permission_code;
+        $permission->store;
+        $permission->discard_changes;
+
+
+        return $c->render(
+            status  => 200,
+            openapi => $permission
+        );
+    }
+    catch {
+        $c->unhandled_exception($_);
+    };
+}
 sub get_contract {
     my $c = shift->openapi->valid_input or return;
 

@@ -1,4 +1,4 @@
-package Koha::ContractPermisson;
+package Koha::ContractPermission;
 
 # This file is part of Koha.
 #
@@ -20,6 +20,7 @@ use Modern::Perl;
 use Carp;
 
 use Koha::Database;
+use Koha::Contracts;
 
 use base qw(Koha::Object);
 
@@ -29,13 +30,25 @@ Koha::ContractPermission - Koha Contract Permission Object class
 =head1 API
 =head2 Class methods
 
+=head3 contract
+
+Return the contract linked to this permission
+
+=cut
+
+sub contract {
+    my ( $self ) = @_;
+    my $rs = $self->_result->contract;
+    return unless $rs;
+    return Koha::Contract->_new_from_dbic( $rs );
+}
 
 =head2 Internal methods
 =head3 _type
 =cut
 
 sub _type {
-    return 'KohaPluginComBywatersolutionsContractsContractPermission';
+    return 'KohaPluginComBywatersolutionsContractsPermission';
 }
 
 1;

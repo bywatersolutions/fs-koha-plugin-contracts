@@ -37,12 +37,13 @@ BEGIN {
     require Koha::Schema::Result::KohaPluginComBywatersolutionsContractsResource;
     require Koha::Contracts;
     require Koha::ContractPermissions;
+    require Koha::ContractResources;
 
 
     # register the additional schema classes
     Koha::Schema->register_class(KohaPluginComBywatersolutionsContractsContract => 'Koha::Schema::Result::KohaPluginComBywatersolutionsContractsContract');
-    Koha::Schema->register_class(KohaPluginComBywatersolutionsContractsContractPermission => 'Koha::Schema::Result::KohaPluginComBywatersolutionsContractsPermission');
-    Koha::Schema->register_class(KohaPluginComBywatersolutionsContractsContractResource => 'Koha::Schema::Result::KohaPluginComBywatersolutionsContractsResource');
+    Koha::Schema->register_class(KohaPluginComBywatersolutionsContractsPermission => 'Koha::Schema::Result::KohaPluginComBywatersolutionsContractsPermission');
+    Koha::Schema->register_class(KohaPluginComBywatersolutionsContractsResource => 'Koha::Schema::Result::KohaPluginComBywatersolutionsContractsResource');
     # force a refresh of the database handle so that it includes the new classes
     Koha::Database->schema({ new => 1 });
 }
@@ -188,6 +189,14 @@ sub intranet_js {
     my ( $self ) = @_;
 
     return q|
+    <script>
+
+    if( $("#catalog_detail").length > 0 ){
+        $("#bibliodetails ul").append('<li role="presentation"><a href="#contracts" aria-controls="contracts" role="tab" data-toggle="tab">Contracts</a></li>');
+        $("#bibliodetails .tab-content").append('<div role="tabpanel" class="tab-pane" id="contracts"><div id="contracts_content">Contracts</div></div>');
+    }
+
+/**
     let contract = {
       "Permission_Code": "A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K1",
       "Permission_type": "Permission Granted",
@@ -247,7 +256,8 @@ sub intranet_js {
       $("h1.title").after('<a href="#" id="title_contracts">Show contract (Example, display test)</a>');
     }
     $("body").on('click','#title_contracts',function(){console.log('click');$("#contract_modal").modal({show:true});});
-
+    **/
+    </script>
     |;
 }
 
@@ -256,7 +266,8 @@ sub api_routes {
 
     my $contracts_spec_str = $self->mbf_read('openapi.json');
     my $permissions_spec_str = $self->mbf_read('permissions.json');
-    my $spec     = { %{decode_json($contracts_spec_str)}, %{decode_json($permissions_spec_str)} };
+    my $resources_spec_str = $self->mbf_read('resources.json');
+    my $spec     = { %{decode_json($contracts_spec_str)}, %{decode_json($permissions_spec_str)}, %{decode_json($resources_spec_str)} };
 
     return $spec;
 }
