@@ -43,6 +43,19 @@ sub contract {
     return Koha::Contract->_new_from_dbic( $rs );
 }
 
+=head3 resources
+
+Return the contract resources linked to this permission
+
+=cut
+
+sub resources {
+    my ( $self ) = @_;
+    my $rs = $self->_result->resources;
+    return unless $rs;
+    return Koha::ContractResources->_new_from_dbic( $rs );
+}
+
 =head2 Internal methods
 =head3 _type
 =cut

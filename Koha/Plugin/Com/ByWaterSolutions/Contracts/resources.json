@@ -93,7 +93,9 @@
           "type": "string",
           "enum": [
               "permission",
-              "contract"
+              "contract",
+              "permission.contract",
+              "biblio"
           ]
         }
       }

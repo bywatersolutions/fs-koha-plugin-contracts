@@ -149,5 +149,19 @@ sub koha_objects_class {
     'Koha::Contracts';
 }
 
+__PACKAGE__->has_many(
+  "permissions",
+  "Koha::Schema::Result::KohaPluginComBywatersolutionsContractsPermission",
+  { "foreign.contract_id" => "self.contract_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+__PACKAGE__->might_have(
+  "copyright_holder",
+  "Koha::Schema::Result::Aqbookseller",
+  { "foreign.id" => "self.supplier_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

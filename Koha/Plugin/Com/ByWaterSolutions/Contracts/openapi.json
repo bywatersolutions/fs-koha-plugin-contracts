@@ -86,9 +86,12 @@
         "items": {
           "type": "string",
           "enum": [
+              "copyright_holder",
+              "permissions.resources.biblio",
               "permissions"
           ]
-        }
+        },
+        "collectionFormat": "csv"
       }
       ],
       "responses": {

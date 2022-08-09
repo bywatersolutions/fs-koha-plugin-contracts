@@ -143,5 +143,11 @@ sub koha_objects_class {
     'Koha::ContractPermissions';
 }
 
+__PACKAGE__->has_many(
+  "resources",
+  "Koha::Schema::Result::KohaPluginComBywatersolutionsContractsResource",
+  { "foreign.permission_id" => "self.permission_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

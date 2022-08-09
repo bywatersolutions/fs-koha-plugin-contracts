@@ -37,13 +37,15 @@ Return the vendor linked to this contract
 
 sub copyright_holder {
     my ( $self ) = @_;
-    my $rs = $self->_result->supplier_id;
+    my $rs = $self->_result->copyright_holder;
     return unless $rs;
     return Koha::Acquisition::Bookseller->_new_from_dbic( $rs );
 }
 
 =head3 permissions
+
 Return the permissions linked to this contract
+
 =cut
 
 sub permissions {

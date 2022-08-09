@@ -107,5 +107,12 @@ sub koha_objects_class {
     'Koha::ContractResources';
 }
 
+__PACKAGE__->belongs_to(
+  "biblio",
+  "Koha::Schema::Result::Biblio",
+  { biblionumber => "biblionumber" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

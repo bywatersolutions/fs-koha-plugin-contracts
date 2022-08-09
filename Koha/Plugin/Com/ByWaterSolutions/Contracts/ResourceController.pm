@@ -76,7 +76,7 @@ sub add_resource {
     my $biblionumber = $c->validation->param('body')->{'biblionumber'};
     my $patron = $c->stash('koha.user');
     return try {
-        my $resource = Koha::Contract->new({
+        my $resource = Koha::ContractResource->new({
             permission_id => $permission_id,
             biblionumber => $biblionumber
         });

@@ -45,6 +45,7 @@
                             <th>Supplier Id</th>
                             <th>Contract Number</th>
                             <th>Permissions</th>
+                            <th>Resources</th>
                             <th>Created On</th>
                             <th>Created By</th>
                             <th>Updated On</th>
@@ -69,7 +70,7 @@
         <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">×</button>
+                <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">x</button>
                 <h3 id="search_filters_label">Edit contract: <span id="contract_edit_modal_name"></span</h3>
             </div>
             <div class="modal-body">
@@ -77,8 +78,14 @@
                 <input type="hidden" id="contract_edit_id" name="contract_edit_id">
                 <label for="contract_edit_number">Number:</label>
                 <input id="contract_edit_number" name="contract_edit_number" type="text" class="contract_update">
+                <ul>
+                <li>
+                <label  for="vendor_select">Copyright holder</label>
+                <select name="vendor_selector" id="vendor_select">
+                </select>
+                </li>
+                </ul>
                 <hr>
-                <a id="replace_existing_contract" class="btn btn-default btn-xs" href="#">Update</a>
                 </div>
                 <fieldset id="permissions_editor">
                 </fieldset>
@@ -95,31 +102,20 @@
     [% Asset.css("css/humanmsg.css") | $raw %]
     [% Asset.js("lib/jquery/plugins/humanmsg.js") | $raw %]
     [% INCLUDE 'datatables.inc' %]
+    [% INCLUDE 'select2.inc' %]
 
     <script>
         let filters_table;
-        //============Test
+        $.fn.select2.defaults.set("width", "100%" );
+        $.fn.select2.defaults.set("dropdownAutoWidth", true );
         $(document).ready(function(){
-                let options = {
-                    url: '/api/v1/contrib/contracts/resources',
-                    method: "GET",
-                    contentType: "application/json",
-                    headers: { "x-koha-embed" : "permission" },
-                };
-                $.ajax(options)
-                    .then(function(result) {
-                        console.log("================");
-                        console.log( result );
-                        console.log("================");
-                    })
-                    .fail(function(err) {
-                        humanMsg.displayAlert( _("There was an error fetching the resources") + err.responseText, { className: 'humanError' } );
-                    });
-        //===================
+
+            ContractFunctions.v_select($("#vendor_select"));
             contracts_table = $("#contracts_table").kohaTable({
                 "ajax": {
                     "url": "/api/v1/contrib/contracts/contracts"
                 },
+                "embed": ["copyright_holder","permissions.resources.biblio"], 
                 "columns": [
                     {
                         "data": "contract_id",
@@ -127,9 +123,19 @@
                         "orderable": true
                     },
                     {
-                        "data": "supplier_id",
+                        "data": "copyright_holder.id:copyright_holder.name:copyright_holder.notes",
                         "searchable": true,
-                        "orderable": true
+                        "orderable": true,
+                        "render": function( data, type, row, meta ) {
+                            var supplier = "";
+                            if( row.copyright_holder ){
+                                let ch = row.copyright_holder;
+                                supplier += ch.name;
+                                supplier += " ("+ch.id+")</br>";
+                                supplier += ch.notes;
+                            }
+                            return supplier;
+                        }
                     },
                     {
                         "data": "contract_number",
@@ -137,16 +143,45 @@
                         "orderable": true
                     },
                     {
-                        "data": function( row, meta, val, type ) {
+                        "data": "permissions.permission_id:permissions.permission_type",
+                        "searchable": true,
+                        "orderable": true,
+                        "render": function( data, type, row, meta ) {
                             var perms ="";
-                            console.log(row.permissions );
                             row.permissions.forEach(function(e){
-                                perms += e.permission_id + " " + e.permission_type + " " + e.permission_code + "</br>";
+                                perms += e.permission_id + " " + e.permission_type + " " + e.permission_code ;
+                                [% IF biblionumber %]
+                                    let biblionumber="[% biblionumber %]";
+                                    let bib_linked = false;
+                                    e.resources.forEach(function(r){
+                                        if( r.biblionumber == biblionumber ){ bib_linked=true;return false; }
+                                    });
+                                    if( !bib_linked ){
+                                       perms += '<a class="btn btn-default btn-xs link_resource" data-biblionumber="[% biblionumber %]" data-permission_id="'+e.permission_id+'">Link to bib</a>';
+                                    }
+                                [% END %]
+                                perms += '</br><hr>';
                             });
                             return perms;
                         },
-                        "searchable": false,
+                    },
+                    {
+                        "data": "permissions.resources.biblionumber:permissions.resources.resource_id:permissions.resources.biblio.title",
+                        "searchable": true,
                         "orderable": true,
+                        "render": function( data, type, row, meta ) {
+                            var perms ="";
+                            row.permissions.forEach(function(e){
+                                e.resources.forEach(function(r){
+                                    perms += "Resource " + r.resource_id + ", biblionumber:" + r.biblionumber + "</br>";
+                                    if( r.biblio ){
+                                        perms += r.biblio.title + "</br>";
+                                    }
+                                perms += "<hr>";
+                                });
+                            });
+                            return perms;
+                        },
                     },
                     {
                         "data": "created_on",
@@ -183,14 +218,23 @@
                         "searchable": false,
                         "orderable": false
                     }
-                ],
-                "embed": ["permissions"] 
+                ]
             }, null, 1);
 
             $("body").on('change', '.contract_update',function() {
+                let parent_form = $(this).closest('div');
+                let parent_type = parent_form.data('type');
+                ContractFunctions[parent_type](parent_form);
+            });
+            $("body").on('click', '.contract_update_button',function() {
                 let parent_form = $(this).parent('div');
                 let parent_type = parent_form.data('type');
                 ContractFunctions[parent_type](parent_form);
+            });
+            $("body").on('click', '.link_resource',function() {
+                let permission_id = $(this).data('permission_id');
+                let biblionumber = $(this).data('biblionumber');
+                ContractFunctions.add_resource(permission_id,biblionumber);
             });
                 
 
@@ -198,22 +242,97 @@
 
         var ContractFunctions = {
 
-            edit_contract:  function(element){
-                console.log( $(element) );
-                let contract_id = $(element).data('contract_id');
-                let contract_number = $(element).data('contract_number');
+            display_vendor: function (state) {
+                var $text;
+                $text = $('<span>'+state.text+'</span>');
+                return $text;
+            },
 
+            v_select: function(element) {
+
+            element.kohaSelect({
+                //dropdownParent: $("#edit_contract_modal"),
+                width: '30%',
+                allowClear: false,
+                ajax: {
+                   url: '/api/v1/acquisitions/vendors',
+                   delay: 300,
+                   cache: true,
+                   dataType: 'json',
+                   data: function (params) {
+                       var search_term = (params.term === undefined) ? '' : params.term;
+                       var cur_p = (params.page === undefined) ? '0' : params.page;
+                       var query = {
+                           "q": JSON.stringify({"name":{"-like":'%'+search_term+'%'}}),
+                           "_order_by": "name",
+                           "_page": cur_p
+                        };
+
+                        return query;
+                    },
+                    processResults: function (data) {
+                        var results = [];
+                        data.results.forEach( function ( vendor ) {
+                            results.push(
+                                {
+                                    "id": "" + vendor.id.escapeHtml(),
+                                    "text": vendor.name.escapeHtml()
+                                }
+                            );
+                        });
+                        return { "results": results, "pagination": { "more": data.pagination.more } };
+                    }
+                },
+                templateResult: ContractFunctions.display_vendor
+            });
+               return element;
+            },
+            add_resource: function(permission_id,biblionumber){
                 let options = {
-                    url: '/api/v1/contrib/contracts/contracts/' + contract_id,
-                    method: "GET",
+                    url: '/api/v1/contrib/contracts/resources/',
+                    method: "POST",
                     contentType: "application/json",
-                    headers: { 'embed': '["permissions"]' },
+                    data: JSON.stringify({
+                        permission_id: permission_id,
+                        biblionumber: biblionumber
+                    })
                 };
                 $.ajax(options)
                     .then(function(result) {
+                        humanMsg.displayAlert( _("Resource successfuly linked."), { className: 'human Success' } );
+                        contracts_table.DataTable().ajax.reload();
+
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error linking the resource") + err.responseText, { className: 'humanError' } );
+                    });
+            },
+
+            edit_contract:  function(element){
+                let contract_id = $(element).data('contract_id');
+                let contract_number = $(element).data('contract_number');
+
+                if ( contract_id != "new" ){
+                let options = {
+                    url: '/api/v1/contrib/contracts/contracts',
+                    method: "GET",
+                    contentType: "application/json",
+                    headers: { 'x-koha-embed': ["permissions","copyright_holder"] },
+                    data: 'q=[{"me.contract_id":'+contract_id+'}]'
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        result = result[0];
                         $("#contract_edit_number").val(result.contract_number);
                         $("#contract_edit_id").val(result.contract_id);
-                        ContractFunctions.get_permissions( result.contract_id );
+                        if(result.copyright_holder){
+                        $("#vendor_select").select2('destroy');
+                            $("#vendor_select").html(''); 
+                            $("#vendor_select").append('<option value="'+result.supplier_id+'" selected="selected">'+result.copyright_holder.name+'</option>');
+                        ContractFunctions.v_select($("#vendor_select"));
+                //$("#vendor_select").select2({ dropdownParent: $("#edit_contract_modal") });
+                        }
+                        ContractFunctions.edit_permissions( result.permissions );
 
                         $("#edit_contract_modal").modal('show');
 
@@ -221,11 +340,16 @@
                     .fail(function(err) {
                         humanMsg.displayAlert( _("There was an error fetching the contract") + err.responseText, { className: 'humanError' } );
                     });
+                } else {
+                        $("#contract_edit_number").val("new");
+                        $("#contract_edit_id").val("new");
+                        $("#edit_contract_modal").modal('show');
+                }
+
             },
 
             delete_contract: function(element){
                 let contract_id = $(element).data('contract_id');
-                console.log(contract_id);
                 let options = {
                     url: '/api/v1/contrib/contracts/contracts/' + contract_id,
                     method: "DELETE",
@@ -251,7 +375,6 @@
                     url = url + '/' + contract_id
                 }
                 let contract_number = $(element).children('input[name="contract_edit_number"]').val();
-                console.log( contract_number );
                 let options = {
                     url: url,
                     method: method,
@@ -271,7 +394,7 @@
             },
 
             update_permission: function(element){
-                let permission_id = $(element).children('input[name="permission_edit_id"]').val();
+                let permission_id = $(element).find('input[name="permission_edit_id"]').val();
                 var url = '/api/v1/contrib/contracts/permissions';
                 var method = "PUT";
                 if( permission_id == 'new' ){
@@ -279,14 +402,15 @@
                 } else {
                     url = url + '/' + permission_id
                 }
-                let permission_type = $(element).children('input[name="permission_edit_type"]').val();
-                console.log( permission_type );
+                let permission_type = $(element).find('input[name="permission_edit_type"]').val();
+                let permission_code = $(element).find('input[name="permission_edit_code"]').val();
                 let options = {
                     url: url,
                     method: method,
                     contentType: "application/json",
                     data: JSON.stringify({
                         permission_type: permission_type,
+                        permission_code: permission_code,
                     })
                 };
                 $.ajax(options)
@@ -299,30 +423,50 @@
                     });
             },
 
-            get_permissions: function( contract_id ){
-                let options = {
-                    url: '/api/v1/contrib/contracts/permissions?contract_id='+contract_id,
-                    method: 'GET',
-                    contentType: "application/json",
-                };
-                $.ajax(options)
-                    .then(function(result) {
-                            console.log(result);
+            edit_permissions: function( permissions ){
+                        [% SET perm_types = AuthorisedValues.GetAuthValueDropbox( 'PERMISSION_TYPES' ) %]
+                        [% IF perm_types.count %]
+                            [% SET perm_dropdown = '<select class="permission_type">' %]
+                            [% FOREACH perm IN perm_types %]
+                                 [% perm_dropdown = perm_dropdown _ '<option val="' _ perm.authorised_value _ '">' _ perm.lib _ '</option>' %]
+                            [% END %]
+                            [% SET perm_dropdown = perm_dropdown _ '</select>' %]
+                        [% ELSE %]
+                            [% SET perm_dropdown = '<input class="permission_type">' %]
+                        [% END %]
+
                         let permissions_section = '<hr>';
-                        result.forEach(function(p){
+                        permissions.forEach(function(p,index){
                             permissions_section += '<div class="permission-edit" data-type="update_permission">';
+                            permissions_section += '<ul>';
                             permissions_section += '<input type="hidden" id="contract_edit_id" name="contract_edit_id">';
                             permissions_section += '<input type="hidden" id="permission_edit_id" name="permission_edit_id" value="'+p.permission_id+'">';
+                            permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_type">Permission type:</label>';
-                            permissions_section += '<input id="permission_edit_type" name="permission_edit_type" type="text" class="contract_update" value="'+p.permission_type +'">';
-                            permissions_section += '<hr><a id="replace_existing_contract" class="btn btn-default btn-xs" href="#">Update</a></div><hr>';
+                            permissions_section += '[% perm_dropdown %]'
+                            permissions_section += '</li>';
+                            permissions_section += '<li>';
+                            permissions_section += '<label for="permission_edit_code">Permission Code:</label>';
+                            permissions_section += '<input id="permission_edit_code" name="permission_edit_code" type="text" class="contract_update" value="'+p.permission_code +'">';
+                            permissions_section += '</li>';
+                            permissions_section += '<li>';
+                            permissions_section += '<label for="permission_edit_signed">Contract signed:</label>';
+                            let checked = p.form_signed?'checked="checked':'';
+                            permissions_section += '<input type="checkbox" ' +checked + ' class="contract_update">';
+                            permissions_section += '</li>';
+                            permissions_section += '<li>';
+                            permissions_section += '<label for="permission_edit_note">Note:</label>';
+                            permissions_section += '<textarea name="permission_edit_note" rows="5" cols="40"></textarea>';
+                            permissions_section += '</li>';
+                            permissions_section += '</ul>';
+                            if( index > 0 ){
+                                permissions_section += '<a id="delete_existing_permission" class="btn btn-default btn-xs">Delete</a></div>';
+                            }
+                            permissions_section += '<hr>';
+                            permissions_section += '</div>';
                         });
                         $("#permissions_editor").html(permissions_section);
-                    })
-                    .fail(function(err) {
-                        humanMsg.displayAlert( _("There was an error fetching permissions") + err.responseText, { className: 'humanError' } );
-                    });
-            }
+           }
 
         };
 

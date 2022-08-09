@@ -126,9 +126,11 @@ sub tool_step_1 {
     my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
+    my $biblionumber = $cgi->param('biblionumber');
     my $template = $self->get_template({ file => 'contracts.tt' });
     my $count = Koha::Contracts->search()->count;
     $template->param( contracts_count => $count );
+    $template->param( biblionumber => $biblionumber ) if $biblionumber;
     print $cgi->header();
     print $template->output();
 }
@@ -190,10 +192,10 @@ sub intranet_js {
 
     return q|
     <script>
-
     if( $("#catalog_detail").length > 0 ){
         $("#bibliodetails ul").append('<li role="presentation"><a href="#contracts" aria-controls="contracts" role="tab" data-toggle="tab">Contracts</a></li>');
         $("#bibliodetails .tab-content").append('<div role="tabpanel" class="tab-pane" id="contracts"><div id="contracts_content">Contracts</div></div>');
+        $("#contracts_content").append('<a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3AContracts&method=tool&biblionumber='+biblionumber+'" target="popup" onclick="window.open("/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3AContracts&method=tool&biblionumber='+biblionumber+'"); return false;">Link to contract</a>');
     }
 
 /**

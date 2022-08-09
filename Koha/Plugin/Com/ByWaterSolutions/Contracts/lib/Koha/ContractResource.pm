@@ -54,19 +54,21 @@ sub permission {
     return Koha::ContractPermission->_new_from_dbic( $rs );
 }
 
-=head3 contract
+=head3 biblio
 
 Return the contract linked to this resource
 
 =cut
 
-sub contract {
+sub biblio {
     my ( $self ) = @_;
-    my $rs = $self->_result->permission->contract;
+    my $rs = $self->_result->biblio;
     return unless $rs;
-    return Koha::Contract->_new_from_dbic( $rs );
+    return Koha::Biblio->_new_from_dbic( $rs );
 }
+
 =head2 Internal methods
+
 =head3 _type
 =cut
 
