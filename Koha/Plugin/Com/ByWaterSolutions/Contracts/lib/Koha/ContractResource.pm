@@ -56,7 +56,7 @@ sub permission {
 
 =head3 biblio
 
-Return the contract linked to this resource
+Return the biblio linked to this resource
 
 =cut
 

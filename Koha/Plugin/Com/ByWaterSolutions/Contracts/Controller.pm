@@ -53,62 +53,6 @@ sub list_contracts {
     };
 }
 
-sub list_permissions {
-    my $c = shift->openapi->valid_input or return;
-    return try {
-        my $permissions_set = Koha::ContractPermissions->search({});
-        my $permissions = $c->objects->search( $permissions_set );
-        return $c->render(
-            status  => 200,
-            openapi => $permissions
-        );
-    }
-    catch {
-        $c->unhandled_exception($_);
-    };
-}
-
-sub get_permission {
-    my $c = shift->openapi->valid_input or return;
-
-    my $permission_id = $c->validation->param('permission_id');
-    return try {
-        my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
-        return $c->render(
-            status  => 200,
-            openapi => $permission
-        );
-    }
-    catch {
-        $c->unhandled_exception($_);
-    };
-}
-
-sub update_permission {
-    my $c = shift->openapi->valid_input or return;
-
-    my $permission_id = $c->validation->param('permission_id');
-    my $permission_type= $c->validation->param('body')->{'permission_type'};
-    my $permission_code= $c->validation->param('body')->{'permission_code'};
-    my $patron = $c->stash('koha.user');
-    return try {
-        my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
-
-        $permission->permission_type( $permission_type ) if $permission_type;
-        $permission->permission_code( $permission_code ) if $permission_code;
-        $permission->store;
-        $permission->discard_changes;
-
-
-        return $c->render(
-            status  => 200,
-            openapi => $permission
-        );
-    }
-    catch {
-        $c->unhandled_exception($_);
-    };
-}
 sub get_contract {
     my $c = shift->openapi->valid_input or return;
 
@@ -191,21 +135,6 @@ sub delete_contract {
         return $c->render(
             status  => 204,
             openapi => $contract
-        );
-    }
-    catch {
-        $c->unhandled_exception($_);
-    };
-}
-
-sub list_resources {
-    my $c = shift->openapi->valid_input or return;
-    return try {
-        my $resources_set = Koha::Contracts->search({});
-        my $resources = $c->objects->search( $resources_set );
-        return $c->render(
-            status  => 200,
-            openapi => $resources
         );
     }
     catch {

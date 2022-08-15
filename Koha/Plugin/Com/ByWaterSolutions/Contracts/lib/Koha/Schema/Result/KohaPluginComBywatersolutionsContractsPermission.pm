@@ -51,7 +51,7 @@ __PACKAGE__->table("koha_plugin_com_bywatersolutions_contracts_permissions");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  default_value: 'current_timestamp()'
+  default_value: current_timestamp
   is_nullable: 0
 
 =head2 form_signed
@@ -79,7 +79,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    default_value => "current_timestamp()",
+    default_value => \"current_timestamp",
     is_nullable => 0,
   },
   "form_signed",

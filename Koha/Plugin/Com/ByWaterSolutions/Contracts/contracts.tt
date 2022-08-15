@@ -35,7 +35,7 @@
         [% IF contracts_count %]
             <div id="contracts_list">
                 <h2>Contracts</h2>
-                    <a class="btn btn-default btn-xs edit_contract" onclick="ContractFunctions.edit_contract(this)" data-contract_id="new" data-contract_number="">
+                    <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="">
                     <i class="fa fa-plus"></i> New contract
                     </a>
                 <table id="contracts_table">
@@ -75,23 +75,30 @@
             </div>
             <div class="modal-body">
                 <div class="contract-edit" data-type="update_contract">
-                <input type="hidden" id="contract_edit_id" name="contract_edit_id">
-                <label for="contract_edit_number">Number:</label>
-                <input id="contract_edit_number" name="contract_edit_number" type="text" class="contract_update">
-                <ul>
-                <li>
-                <label  for="vendor_select">Copyright holder</label>
-                <select name="vendor_selector" id="vendor_select">
-                </select>
-                </li>
-                </ul>
+                <fieldset class="rows">
+                    <legend>Contract</legend>
+                    <ul>
+                        <li>
+                            <input type="hidden" id="contract_edit_id" name="contract_edit_id">
+                            <label for="contract_edit_number">Number:</label>
+                            <input id="contract_edit_number" name="contract_edit_number" type="text" class="contract_update">
+                        </li>
+                        <li>
+                            <label  for="vendor_select">Copyright holder</label>
+                            <select name="vendor_selector" id="vendor_select" class="contract_update">
+                            </select>
+                        </li>
+                    </ul>
+                    <div id="contract_updated"></div>
+                </fieldset>
                 <hr>
                 </div>
                 <fieldset id="permissions_editor">
                 </fieldset>
+                <a id="new_permission" class="btn btn-default btn-xs new_permission">Add permission</a>
             </div>
             <div class="modal-footer">
-                <a href="#" data-dismiss="modal" aria-hidden="true" class="cancel">Cancel</a>
+                <a href="#" data-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
             </div>
         </div>
         </div>
@@ -103,11 +110,19 @@
     [% Asset.js("lib/jquery/plugins/humanmsg.js") | $raw %]
     [% INCLUDE 'datatables.inc' %]
     [% INCLUDE 'select2.inc' %]
+    [% INCLUDE 'calendar.inc' %]
 
     <script>
         let filters_table;
-        $.fn.select2.defaults.set("width", "100%" );
-        $.fn.select2.defaults.set("dropdownAutoWidth", true );
+        function tempAlert(id,msg,duration) {
+            let el = $("#"+id);
+            console.log( el );
+            el.text(msg);
+            setTimeout(function(){
+             el.text("");
+            },duration);
+        }
+
         $(document).ready(function(){
 
             ContractFunctions.v_select($("#vendor_select"));
@@ -115,6 +130,7 @@
                 "ajax": {
                     "url": "/api/v1/contrib/contracts/contracts"
                 },
+                "stateSave": true,
                 "embed": ["copyright_holder","permissions.resources.biblio"], 
                 "columns": [
                     {
@@ -186,7 +202,10 @@
                     {
                         "data": "created_on",
                         "searchable": true,
-                        "orderable": true
+                        "orderable": true,
+                        "render": function( data, type, row, meta ) {
+                            return data ? escape_str($date(data)) : "";
+                        }
                     },
                     {
                         "data": "created_user",
@@ -196,7 +215,11 @@
                     {
                         "data": "updated_on",
                         "searchable": true,
-                        "orderable": true
+                        "orderable": true,
+                        "render": function( data, type, row, meta ) {
+                            return data ? escape_str($date(data)) : "";
+                        }
+
                     },
                     {
                         "data": "updated_user",
@@ -206,7 +229,7 @@
                     {
                         "data": function( row, meta, val, type ) {
                             let contract = row;
-                            let contract_buttons = '<a class="btn btn-default btn-xs edit_contract" onclick="ContractFunctions.edit_contract(this)"';
+                            let contract_buttons = '<a class="btn btn-default btn-xs edit_contract" ';
                             contract_buttons += ' data-contract_id="'+ contract.contract_id;
                             contract_buttons += '" data-contract_number="'+ contract.contract_number;
                             contract_buttons += '" ><i class="fa fa-pencil"></i> Edit contract</a>';
@@ -226,6 +249,13 @@
                 let parent_type = parent_form.data('type');
                 ContractFunctions[parent_type](parent_form);
             });
+            $("body").on('change', 'select.permission_type',function() {
+                let parent_form = $(this).closest('div');
+                let parent_type = parent_form.data('type');
+                console.log( $(this) );
+                parent_form.find('input[name=permission_edit_code]').val( $(this).val() );
+                ContractFunctions[parent_type](parent_form);
+            });
             $("body").on('click', '.contract_update_button',function() {
                 let parent_form = $(this).parent('div');
                 let parent_type = parent_form.data('type');
@@ -235,6 +265,26 @@
                 let permission_id = $(this).data('permission_id');
                 let biblionumber = $(this).data('biblionumber');
                 ContractFunctions.add_resource(permission_id,biblionumber);
+            });
+            $("#new_contract").click(function(){
+                $("#permissions_editor").html("");
+                $("#new_permission").hide();
+                ContractFunctions.edit_contract(this);
+            });
+            $("body").on('click',".edit_contract",function() {
+                $("#permissions_editor").html("");
+                $("#new_permission").show();
+                ContractFunctions.edit_contract(this);
+            });
+            $("#new_permission").click(function(){
+                ContractFunctions.add_permissions([{
+                    contract_id  : $(this).data('contract_id'),
+                    permission_id: "new",
+                    permission_type: "Permission Granted",
+                    permission_code: "A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K3",
+                    form_signed: 0,
+                    note: ""
+                }]);
             });
                 
 
@@ -251,7 +301,7 @@
             v_select: function(element) {
 
             element.kohaSelect({
-                //dropdownParent: $("#edit_contract_modal"),
+                dropdownParent: $("#edit_contract_modal"),
                 width: '30%',
                 allowClear: false,
                 ajax: {
@@ -330,10 +380,9 @@
                             $("#vendor_select").html(''); 
                             $("#vendor_select").append('<option value="'+result.supplier_id+'" selected="selected">'+result.copyright_holder.name+'</option>');
                         ContractFunctions.v_select($("#vendor_select"));
-                //$("#vendor_select").select2({ dropdownParent: $("#edit_contract_modal") });
                         }
-                        ContractFunctions.edit_permissions( result.permissions );
-
+                        ContractFunctions.add_permissions( result.permissions );
+                        $("#new_permission").data('contract_id',result.contract_id).show();
                         $("#edit_contract_modal").modal('show');
 
                     })
@@ -366,7 +415,7 @@
             },
 
             update_contract: function(element){
-                let contract_id = $(element).children('input[name="contract_edit_id"]').val();
+                let contract_id = $(element).find('input[name="contract_edit_id"]').val();
                 var url = '/api/v1/contrib/contracts/contracts';
                 var method = "PUT";
                 if( contract_id == 'new' ){
@@ -374,18 +423,24 @@
                 } else {
                     url = url + '/' + contract_id
                 }
-                let contract_number = $(element).children('input[name="contract_edit_number"]').val();
+                let contract_number = $(element).find('input[name="contract_edit_number"]').val();
+                let supplier_id =     $(element).find('#vendor_select').val();
                 let options = {
                     url: url,
                     method: method,
                     contentType: "application/json",
                     data: JSON.stringify({
                         contract_number: contract_number,
+                        supplier_id: supplier_id?supplier_id:"",
                     })
                 };
                 $.ajax(options)
                     .then(function(result) {
-                        humanMsg.displayAlert( _("Contract successfully updated."), { className: 'human Success' } );
+                        $(element).find('input[name="contract_edit_id"]').val(result.contract_id);
+                        if( method == 'POST' ){
+                            $("#new_permission").data('contract_id',result.contract_id).show();
+                        }
+                        tempAlert("contract_updated","Contract updated",1000);
                         contracts_table.DataTable().ajax.reload();
                     })
                     .fail(function(err) {
@@ -402,70 +457,96 @@
                 } else {
                     url = url + '/' + permission_id
                 }
-                let permission_type = $(element).find('input[name="permission_edit_type"]').val();
+                let contract_id = $(element).find('input[name="contract_edit_id"]').val();
+                let permission_type = $(element).find('select[name="permission_edit_type"] option:selected').text();
                 let permission_code = $(element).find('input[name="permission_edit_code"]').val();
+                let permission_date = $(element).find('input[name="permission_edit_date"]').val();
+                console.log( permission_date);
+                let contract_signed = $(element).find('input[name="permission_edit_signed"]').is(':checked')?1:0;
+                let note            = $(element).find('input[name="permission_edit_note"]').val();
                 let options = {
                     url: url,
                     method: method,
                     contentType: "application/json",
                     data: JSON.stringify({
+                        contract_id    : contract_id,
                         permission_type: permission_type,
+                        permission_date: permission_date,
                         permission_code: permission_code,
+                        form_signed:     contract_signed,
+                        note:            note
                     })
                 };
                 $.ajax(options)
                     .then(function(result) {
-                        humanMsg.displayAlert( _("Permission successfully updated."), { className: 'human Success' } );
-                        contracts_table.DataTable().ajax.reload();
+                        $(element).find('input[name="permission_edit_id"]').val(result.permission_id);
+                        tempAlert("permission_updated_"+permission_id,"Permission updated",1000);
+                        contracts_table.DataTable().ajax.reload(null,false);
                     })
                     .fail(function(err) {
                         humanMsg.displayAlert( _("There was an error during update:") + err.responseText, { className: 'humanError' } );
                     });
             },
 
-            edit_permissions: function( permissions ){
+            add_permissions: function( permissions ){
                         [% SET perm_types = AuthorisedValues.GetAuthValueDropbox( 'PERMISSION_TYPES' ) %]
                         [% IF perm_types.count %]
-                            [% SET perm_dropdown = '<select class="permission_type">' %]
+                            [% SET perm_dropdown = '' %]
                             [% FOREACH perm IN perm_types %]
-                                 [% perm_dropdown = perm_dropdown _ '<option val="' _ perm.authorised_value _ '">' _ perm.lib _ '</option>' %]
+                                 [% perm_dropdown = perm_dropdown _ '<option value="' _ perm.authorised_value _ '">' _ perm.lib _ '</option>' %]
                             [% END %]
                             [% SET perm_dropdown = perm_dropdown _ '</select>' %]
                         [% ELSE %]
-                            [% SET perm_dropdown = '<input class="permission_type">' %]
+                            [% SET perm_dropdown = '<input class="permission_type" class="contract_updated">' %]
                         [% END %]
 
                         let permissions_section = '<hr>';
                         permissions.forEach(function(p,index){
                             permissions_section += '<div class="permission-edit" data-type="update_permission">';
-                            permissions_section += '<ul>';
-                            permissions_section += '<input type="hidden" id="contract_edit_id" name="contract_edit_id">';
-                            permissions_section += '<input type="hidden" id="permission_edit_id" name="permission_edit_id" value="'+p.permission_id+'">';
+                            permissions_section += '<fieldset class="rows"><legend>Permissions</legend><ul>';
+                            permissions_section += '<input type="hidden" id="contract_edit_id" name="contract_edit_id" value="'+p.contract_id+'">';
+                            permissions_section += '<input type="hidden" class="permission_edit_id" name="permission_edit_id" value="'+p.permission_id+'">';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_type">Permission type:</label>';
+                            permissions_section += '<select class="permission_type" name="permission_edit_type" data-initial="'+p.permission_code+'">'
                             permissions_section += '[% perm_dropdown %]'
                             permissions_section += '</li>';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_code">Permission Code:</label>';
-                            permissions_section += '<input id="permission_edit_code" name="permission_edit_code" type="text" class="contract_update" value="'+p.permission_code +'">';
+                            permissions_section += '<input name="permission_edit_code" type="text" class="contract_update permission_edit_code" value="'+p.permission_code +'">';
+                            permissions_section += '</li>';
+                            permissions_section += '<li>';
+                            permissions_section += '<label for="permission_edit_date">Permission date:</label>';
+                            permissions_section += '<input name="permission_edit_date" type="text" class="contract_update permission_edit_date" value="'+p.permission_date +'">';
                             permissions_section += '</li>';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_signed">Contract signed:</label>';
-                            let checked = p.form_signed?'checked="checked':'';
-                            permissions_section += '<input type="checkbox" ' +checked + ' class="contract_update">';
+                            let checked = p.form_signed?'checked="checked"':'';
+                            permissions_section += '<input name="permission_edit_signed" type="checkbox" ' +checked + ' class="contract_update">';
                             permissions_section += '</li>';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_note">Note:</label>';
-                            permissions_section += '<textarea name="permission_edit_note" rows="5" cols="40"></textarea>';
+                            permissions_section += '<textarea name="permission_edit_note" rows="5" cols="40" class="contract_update"></textarea>';
                             permissions_section += '</li>';
-                            permissions_section += '</ul>';
-                            if( index > 0 ){
-                                permissions_section += '<a id="delete_existing_permission" class="btn btn-default btn-xs">Delete</a></div>';
-                            }
+                            permissions_section += '</ul></fieldset>';
+                            permissions_section += '<div id="permission_updated_'+p.permission_id+'"></div>';
+                            permissions_section += '<a id="delete_existing_permission" class="btn btn-default btn-xs">Delete</a></div>';
                             permissions_section += '<hr>';
                             permissions_section += '</div>';
                         });
-                        $("#permissions_editor").html(permissions_section);
+                        $("#permissions_editor").append(permissions_section);
+                        $("select.permission_type").each(function(){
+                            let init =$(this).data('initial');
+                            let typesel = $(this).find('option[value="'+init+'"]');
+                            typesel.attr('selected',"selected");
+                        });
+
+                        $('.permission_edit_date').flatpickr({
+                            altInput: true,
+                            altFormat: "m/d/Y",
+                            altInputClass: "permission_edit_date flatpickr-input",
+                            dateFormat: "Y-m-d"
+                        });
            }
 
         };

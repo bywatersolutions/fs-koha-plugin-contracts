@@ -66,10 +66,11 @@ sub new {
 
 sub install {
     my ( $self, $args ) = @_;
+    my $dbh = C4::Context->dbh;
 
     my $contracts_table = $self->get_qualified_table_name('contracts');
     unless( TableExists( $contracts_table ) ){
-        C4::Context->dbh->do( "
+        $dbh->do( "
             CREATE TABLE `$contracts_table` (
                 contract_id INT(10) NOT NULL AUTO_INCREMENT,
                 supplier_id INT(10) NULL,
@@ -85,7 +86,7 @@ sub install {
     }
     my $permissions_table = $self->get_qualified_table_name('permissions');
     unless( TableExists( $permissions_table ) ){
-        C4::Context->dbh->do( "
+        $dbh->do( "
             CREATE TABLE $permissions_table (
                 permission_id INT(10) NOT NULL AUTO_INCREMENT,
                 contract_id INT( 10 ) NULL,
@@ -101,7 +102,7 @@ sub install {
     }
     my $resources_table = $self->get_qualified_table_name('resources');
     unless( TableExists( $resources_table ) ){
-        C4::Context->dbh->do( "
+        $dbh->do( "
             CREATE TABLE $resources_table (
                 resource_id INT(10) NOT NULL AUTO_INCREMENT,
                 permission_id INT( 10 ) NULL,
@@ -110,7 +111,17 @@ sub install {
                 CONSTRAINT `contracts_plugin_resources_ibfk_1` FOREIGN KEY (`permission_id`) REFERENCES `$permissions_table` (`permission_id`)
             ) ENGINE = INNODB;
         " );
+
     }
+
+    $dbh->do("INSERT IGNORE INTO authorised_value_categories( category_name, is_system ) VALUES ('PERMISSION_TYPES', NULL)");
+    $dbh->do("INSERT IGNORE INTO authorised_values( category, lib, authorised_value ) VALUES ('PERMISSION_TYPES','Public Domain, No Notice','A1 B1a C1 D1 E1 F1 G1 H1 I1 J1 K1')");
+    $dbh->do("INSERT IGNORE INTO authorised_values( category, lib, authorised_value ) VALUES ('PERMISSION_TYPES','Permission Granted','A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K3')");
+    $dbh->do("INSERT IGNORE INTO authorised_values( category, lib, authorised_value ) VALUES ('PERMISSION_TYPES','Permission Denied','A1 B8a C1 D2 E1 F2a F2b G2 H2 I1 J9 P1 P4 P13 P15')");
+    $dbh->do("INSERT IGNORE INTO authorised_values( category, lib, authorised_value ) VALUES ('PERMISSION_TYPES','Contract Conditions','A1 B4b C1 D2 E1 F9 G1 H2 I1 J1 K2j')");
+    $dbh->do("INSERT IGNORE INTO authorised_values( category, lib, authorised_value ) VALUES ('PERMISSION_TYPES','Protected','A1 B4b C1 D2 E1 F9 G2 H2 I1 J1 K2j')");
+    $dbh->do("INSERT IGNORE INTO authorised_values( category, lib, authorised_value ) VALUES ('PERMISSION_TYPES','Public Domain','A1 B1a C1 D1 E1 F1 G1 H1 I1 J1 K1')");
+    $dbh->do("INSERT IGNORE INTO authorised_values( category, lib, authorised_value ) VALUES ('PERMISSION_TYPES','Limited Permission Granted','A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K3a M3a N4a')");
 
     return 1;
 }
@@ -191,13 +202,9 @@ sub intranet_js {
     my ( $self ) = @_;
 
     return q|
+    <script src="/api/v1/contrib/contracts/static/js/vendor.js"></script>
+    <script src="/api/v1/contrib/contracts/static/js/biblio_details.js"></script>
     <script>
-    if( $("#catalog_detail").length > 0 ){
-        $("#bibliodetails ul").append('<li role="presentation"><a href="#contracts" aria-controls="contracts" role="tab" data-toggle="tab">Contracts</a></li>');
-        $("#bibliodetails .tab-content").append('<div role="tabpanel" class="tab-pane" id="contracts"><div id="contracts_content">Contracts</div></div>');
-        $("#contracts_content").append('<a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3AContracts&method=tool&biblionumber='+biblionumber+'" target="popup" onclick="window.open("/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3AContracts&method=tool&biblionumber='+biblionumber+'"); return false;">Link to contract</a>');
-    }
-
 /**
     let contract = {
       "Permission_Code": "A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K1",
@@ -213,44 +220,6 @@ sub intranet_js {
     };
 
 
-    function add_contract_modal(contracts){
-        $.each(contracts,function(index,value){
-            let result = '<tr class="contract">';
-            result += '<td><ul>'
-            result +=      '<li>';
-            result +=        'Permission code:' + contract.Permission_Code;
-            result +=      '</li>';
-            result +=      '<li>';
-            result +=        'Permission type:' + contract.Permission_type;
-            result +=      '</li>';
-            result +=      '<li>';
-            result +=        'Copyright holder:' + contract.Copyright_holder;
-            result +=      '</li>';
-          result +=      '<li>';
-            result +=        'Supplier code:' + contract.Supplier_code;
-            result +=      '</li>';
-            result +=      '<li>';
-            result +=        'Contract number:' + contract.Contract_number;
-            result +=      '</li>';
-            result +=      '<li>';
-            result +=        'Permission number:' + contract.Permission_number;
-            result +=      '</li>';
-            result +=      '<li>';
-            result +=        'Permission date:' + contract.Permission_date;
-            result +=      '</li>';
-            result +=      '<li>';
-            result +=        'Note:' + contract.Note;
-            result +=      '</li>';
-            result +=    '</li>';
-            result +=    '</ul></td>';
-            result +=    '</tr>';
-            result +=    '<tr class="contract_page contract_result_bottom">';
-            result +=      '<td colspan="2" class="contract_details_'+value.titleId+'">';
-            result +=      '</td>';
-            result +=    '</tr>';
-            $("#contract_modal_results").append(result);
-        });
-    }
 
     add_contract_modal([contract]);
 
@@ -270,6 +239,15 @@ sub api_routes {
     my $permissions_spec_str = $self->mbf_read('permissions.json');
     my $resources_spec_str = $self->mbf_read('resources.json');
     my $spec     = { %{decode_json($contracts_spec_str)}, %{decode_json($permissions_spec_str)}, %{decode_json($resources_spec_str)} };
+
+    return $spec;
+}
+
+sub static_routes {
+    my ( $self, $args ) = @_;
+
+    my $spec_str = $self->mbf_read('staticapi.json');
+    my $spec     = decode_json($spec_str);
 
     return $spec;
 }

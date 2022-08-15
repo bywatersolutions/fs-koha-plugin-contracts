@@ -1,7 +1,7 @@
 {
   "/permissions": {
     "get": {
-      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#list_permissions",
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::PermissionController#list_permissions",
       "operationId": "listPermissions",
       "tags": ["contracts"],
       "produces": [
@@ -92,7 +92,7 @@
       }
     },
     "post": {
-      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#add_permission",
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::PermissionController#add_permission",
       "operationId": "addPermission",
       "tags": ["permissions"],
       "produces": [
@@ -143,7 +143,7 @@
   },
   "/permissions/{permission_id}": {
     "get": {
-      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#get_permission",
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::PermissionController#get_permission",
       "operationId": "getPermission",
       "tags": ["permissions"],
       "produces": [
@@ -164,7 +164,7 @@
       }
     },
     "put": {
-      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#update_permission",
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::PermissionController#update_permission",
       "operationId": "updatePermission",
       "tags": ["permissions"],
       "produces": [
@@ -222,7 +222,7 @@
       }
     },
     "delete": {
-      "x-mojo-to": "Com::ByWaterSolutions::Contracts::Controller#delete_permission",
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::PermissionController#delete_permission",
       "operationId": "deletePermission",
       "tags": ["permissions"],
       "produces": [
