@@ -32,7 +32,6 @@
         <div class="col-sm-10 col-sm-push-2">
             <main>
 
-        [% IF contracts_count %]
             <div id="contracts_list">
                 <h2>Contracts</h2>
                     <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="">
@@ -55,11 +54,6 @@
                     </thead>
                 </table>
             </div>
-        [% ELSE %]
-            <div class="dialog message">
-                There are no contracts defined.
-            </div>
-        [% END %]
 
             </main>
         </div> <!-- /.col-sm-10.col-sm-push-2 -->
@@ -103,6 +97,30 @@
         </div>
         </div>
     </div>
+    <div id="add_resource_modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">x</button>
+                <h3 id="search_biblios_label">Find resource: <span id="contract_edit_modal_name"></span</h3>
+            </div>
+            <div class="modal-body">
+                <div class="resource_search">
+                    <table id="biblios_table" width="100%">
+                        <thead><tr>
+                            <th>Title</th>
+                            <th>Subtitle</th>
+                            <th>Author</th>
+                        </tr></thead>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
+            </div>
+        </div>
+        </div>
+    </div>
 
 [% MACRO jsinclude BLOCK %]
     [% Asset.js("js/admin-menu.js") | $raw %]
@@ -126,6 +144,30 @@
         $(document).ready(function(){
 
             ContractFunctions.v_select($("#vendor_select"));
+            biblios_table = $("#biblios_table").kohaTable({
+                "ajax": {
+                    "url": "/api/v1/contrib/contracts/biblios"
+                },
+                "stateSave": true,
+                "columns": [
+                    {
+                        "data": "title",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "subtitle",
+                        "searchable": true,
+                        "orderable": true
+                    },
+                    {
+                        "data": "author",
+                        "searchable": true,
+                        "orderable": true
+                    }
+                ]
+            }, null, 1);
+
             contracts_table = $("#contracts_table").kohaTable({
                 "ajax": {
                     "url": "/api/v1/contrib/contracts/contracts"
@@ -196,6 +238,7 @@
                                 perms += "<hr>";
                                 });
                             });
+                            perms += '<a class="btn btn-default btn-xs add_resource">Add resource</a>'
                             return perms;
                         },
                     },
@@ -285,6 +328,9 @@
                     form_signed: 0,
                     note: ""
                 }]);
+            });
+            $("body").on('click', '.add_resource',function() {
+                $("#add_resource_modal").modal('show');
             });
                 
 
