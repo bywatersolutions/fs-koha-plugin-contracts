@@ -34,9 +34,11 @@
 
             <div id="contracts_list">
                 <h2>Contracts</h2>
-                    <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="">
-                    <i class="fa fa-plus"></i> New contract
-                    </a>
+                    [% IF (can_manage_contracts) %]
+                        <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="">
+                        <i class="fa fa-plus"></i> New contract
+                        </a>
+                    [% END %]
                 <table id="contracts_table">
                     <thead>
                         <tr>
@@ -45,7 +47,7 @@
                             <th>Permissions</th>
                             <th>Resources</th>
                             <th>Info</th>
-                            <th>&nbsp;</th>
+                            [% IF (can_manage_contracts) %]<th>&nbsp;</th>[% END %]
                         </tr>
                     </thead>
                 </table>
@@ -108,6 +110,7 @@
                             <th>Title</th>
                             <th>Author</th>
                             <th>ISBN</th>
+                            <th>Publisher</th>
                             <th>Action</th>
                         </tr></thead>
                     </table>
@@ -158,6 +161,7 @@
                         "searchable": true,
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
+                        console.log(row);
                             let sub = row.subtitle ? row.subtitle : "";
                             let complete_title = '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=' + row.biblio_id + '">';
                             complete_title += row.title + " " + sub;
@@ -171,11 +175,12 @@
                         "orderable": true
                     },
                     {
-                        "data": function(row,type,set){
-                            console.log( row );
-                            isbn = row.biblioitem.isbn;
-                            return isbn;
-                        },
+                        "data": "biblioitem.isbn",
+                        "searchable": true,
+                        "orderable": true,
+                    },
+                    {
+                        "data": "biblioitem.publisher",
                         "searchable": true,
                         "orderable": true,
                     },
@@ -257,27 +262,38 @@
                         "render": function( data, type, row, meta ) {i
                             var resources ="";
                             row.permissions.forEach(function(e){
-                                resources += '<ul title="'+e.permission_id+'">';
-                                e.resources.forEach(function(r){
-                                    resources += '<li><ul class="contract_resource">';
-                                    resources += '<li>' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber="';
-                                    resources += r.biblionumber + '">'+(r.biblio?r.biblio.title:'Title not found');
+                                resources += '<ul title="Permission '+e.permission_id+'">';
+                                let init_hidden = "";
+                                let more_button = false;
+                                e.resources.forEach(function(r,index){
+                                    if( index > 2 ){ 
+                                        init_hidden = 'class="extra_resource" style="display:none;"'
+                                        more_button = true;
+                                    }
+                                    resources += '<li '+init_hidden+'><ul class="contract_resource">';
+                                    resources += '<li>' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+ r.biblionumber + '">';
+                                    resources += (r.biblio?r.biblio.title:'Title not found');
                                     resources += "(" + r.biblionumber + ")</a></li>";
                                     resources += "<li>" + (r.biblio?(r.biblio.author?r.biblio.author:"-"):"-") + "</li>";
-                                    resources += "<li>" + (r.biblio?(r.biblio.isbn?r.biblio.isbn:"-"):"-") + "</li>";
                                     resources += '</ul></li>';
                                 });
+                                if( more_button ){
+                                    resources += '<a class="btn btn-default btn-xs show_extra_resources extra_resource">Show all ('+e.resources.length+')</a>';
+                                    resources += '<a class="btn btn-default btn-xs show_extra_resources extra_resource" style="display:none;">Hide extra</a>';
+                                    }
                                 resources += '</ul>';
-                                resources += '<a class="btn btn-default btn-xs add_resource" data-permission_id="';
-                                resources += e.permission_id + '">Add resource (';
-                                resources += e.permission_id + ')</a>';
+                                [% IF (can_manage_contracts) %]
+                                    resources += '<a class="btn btn-default btn-xs add_resource" data-permission_id="';
+                                    resources += e.permission_id + '">Add resource (';
+                                    resources += e.permission_id + ')</a>';
+                                [% END %]
                                 resources += "<hr>";
                             });
                             return resources;
                         },
                     },
                     {
-                        "data": "created_user",
+                        "data": "created_user:updated_user:created_on:updated_on",
                         "searchable": true,
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
@@ -289,6 +305,7 @@
                             c_info += updated + '(' + row.updated_user + ')';
                             return c_info;
                         }
+                    [% IF (can_manage_contracts) %]
                     },
                     {
                         "data": function( row, meta, val, type ) {
@@ -304,6 +321,7 @@
                         },
                         "searchable": false,
                         "orderable": false
+                    [% END %]
                     }
                 ]
             }, null, 1);
@@ -354,6 +372,10 @@
                     let element = $(this).parent('div');
                     ContractFunctions.delete_permission(element);
             });
+            $("body").on('click', '.delete_resource',function() {
+                    let element = $(this).parent('li');
+                    ContractFunctions.delete_resource(element);
+            });
             $("body").on('click', '.add_resource',function() {
                 let cur_per = $(this).data('permission_id');
                 $("#permission_resource").data('permission_id',cur_per).text(cur_per);
@@ -363,6 +385,9 @@
                 let biblionumber = $(this).data('biblionumber');
                 let permission_id = $("#permission_resource").data('permission_id');
                 ContractFunctions.add_resource(permission_id,biblionumber);
+            });
+            $("body").on('click', '.show_extra_resources',function() {
+                $(this).closest('ul').children('.extra_resource').toggle();
             });
                 
 
@@ -443,7 +468,7 @@
                     url: '/api/v1/contrib/contracts/contracts',
                     method: "GET",
                     contentType: "application/json",
-                    headers: { 'x-koha-embed': ["permissions","copyright_holder"] },
+                    headers: { 'x-koha-embed': ["permissions.resources.biblio","copyright_holder"] },
                     data: 'q=[{"me.contract_id":'+contract_id+'}]'
                 };
                 $.ajax(options)
@@ -509,6 +534,23 @@
                     });
             },
 
+            delete_resource: function(element){
+                let resource_id = $(element).data('resource_id');
+                let options = {
+                    url: '/api/v1/contrib/contracts/resources/' + resource_id,
+                    method: "DELETE",
+                    contentType: "application/json",
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        element.remove();
+                        humanMsg.displayAlert( _("Permission successfully deleted."), { className: 'human Success' } );
+                        contracts_table.DataTable().ajax.reload();
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error during deletion:") + err.responseText, { className: 'humanError' } );
+                    });
+            },
 
             update_contract: function(element){
                 let contract_id = $(element).find('input[name="contract_edit_id"]').val();
@@ -599,7 +641,7 @@
                         permissions.forEach(function(p,index){
                             permissions_section += '<div class="permission-edit" data-type="update_permission"'
                             permissions_section += 'data-permission_id="' + p.permission_id + '">';
-                            permissions_section += '<fieldset class="rows"><legend>Permissions</legend><ul>';
+                            permissions_section += '<fieldset class="rows"><legend>Permission '+ p.permission_id +'</legend><ul>';
                             permissions_section += '<input type="hidden" id="contract_edit_id" name="contract_edit_id" value="'+p.contract_id+'">';
                             permissions_section += '<input type="hidden" class="permission_edit_id" name="permission_edit_id" value="'+p.permission_id+'">';
                             permissions_section += '<li>';
@@ -624,6 +666,16 @@
                             permissions_section += '<label for="permission_edit_note">Note:</label>';
                             permissions_section += '<textarea name="permission_edit_note" rows="5" cols="40" class="contract_update"></textarea>';
                             permissions_section += '</li>';
+                            permissions_section += '<li><fieldset><legend>Resources</legend><ul>';
+                            p.resources.forEach(function(r,index){
+                                permissions_section += '<li data-resource_id="'+r.resource_id+'">' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+ r.biblionumber + '">';
+                                permissions_section += (r.biblio?r.biblio.title:'Title not found');
+                                permissions_section += "(" + r.biblionumber + ")</a>";
+                                permissions_section += (r.biblio?(r.biblio.author?" by "+r.biblio.author:"-"):"-");
+                                permissions_section += '<a class="delete_resource" data-resource_id="'+r.resource_id+'"><i class="fa fa-times"></i></a>';
+                                permissions_section += '</li>';
+                                });
+                            permissions_section += '</ul></fieldset></li>';
                             permissions_section += '</ul></fieldset>';
                             permissions_section += '<div id="permission_updated_'+p.permission_id+'"></div>';
                             permissions_section += '<a class="btn btn-default btn-xs delete_permission">Delete</a></div>';

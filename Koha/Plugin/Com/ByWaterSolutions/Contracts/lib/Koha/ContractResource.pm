@@ -26,20 +26,9 @@ use base qw(Koha::Object);
 
 
 =head1 NAME
-Koha::CurbsidePickup - Koha Curbside Pickup Object class
+Koha::ContractResource - Koha Contract Resource Object class
 =head1 API
 =head2 Class methods
-
-=head3 copyright_holder
-Return the vendor linked to this contract
-=cut
-
-sub copyright_holder {
-    my ( $self ) = @_;
-    my $rs = $self->_result->supplier_id;
-    return unless $rs;
-    return Koha::Acquisition::Bookseller->_new_from_dbic( $rs );
-}
 
 =head3 permissions
 

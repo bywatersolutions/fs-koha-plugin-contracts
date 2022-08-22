@@ -75,6 +75,14 @@ sub add_resource {
     my $permission_id = $c->validation->param('body')->{'permission_id'};
     my $biblionumber = $c->validation->param('body')->{'biblionumber'};
     my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        warn "not auth";
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $resource = Koha::ContractResource->new({
             permission_id => $permission_id,
@@ -82,6 +90,7 @@ sub add_resource {
         });
 
         $resource->store;
+        _update_contract($resource, $patron);
 
         return $c->render(
             status  => 200,
@@ -100,6 +109,14 @@ sub update_resource {
     my $permission_id = $c->validation->param('body')->{'permission_id'};
     my $biblionumber = $c->validation->param('body')->{'biblionumber'};
     my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        warn "not auth";
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $resource = Koha::Contracts->find({ resource_id => $resource_id });
 
@@ -108,6 +125,7 @@ sub update_resource {
         $resource->store;
         $resource->discard_changes;
 
+        _update_contract($resource, $patron);
 
         return $c->render(
             status  => 200,
@@ -123,10 +141,21 @@ sub delete_resource {
     my $c = shift->openapi->valid_input or return;
 
     my $resource_id = $c->validation->param('resource_id');
+    my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        warn "not auth";
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $resource = Koha::ContractResources->find({ resource_id => $resource_id });
 
         $resource->delete;
+
+        _update_contract($resource, $patron);
 
         return $c->render(
             status  => 204,
@@ -136,6 +165,21 @@ sub delete_resource {
     catch {
         $c->unhandled_exception($_);
     };
+}
+
+sub _update_contract {
+    my $resource = shift;
+    my $patron = shift;
+    my $contract = $resource->permission->contract;
+    $contract->updated_user( $patron->id );
+    $contract->updated_on( undef );
+    $contract->store();
+}
+
+sub _check_auth {
+    my $patron = shift;
+    my $plugin = Koha::Plugin::Com::ByWaterSolutions::Contracts->new();
+    return $plugin->is_user_authorized({ borrowernumber => $patron->id });
 }
 
 1;

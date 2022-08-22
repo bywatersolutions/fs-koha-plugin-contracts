@@ -136,6 +136,9 @@
       "responses": {
         "200": {
           "description": "A list of resources"
+        },
+        "403": {
+          "description": "You are not authorized to add resources"
         }
       }
     }
@@ -201,6 +204,9 @@
       "responses": {
         "200": {
           "description": "A list of resources"
+        },
+        "403": {
+          "description": "You are not authorized to update resources"
         }
       }
     },
@@ -222,6 +228,9 @@
       "responses": {
         "204": {
           "description": "Resource deleted"
+        },
+        "403": {
+          "description": "You are not authorized to delete resources"
         }
       }
     }

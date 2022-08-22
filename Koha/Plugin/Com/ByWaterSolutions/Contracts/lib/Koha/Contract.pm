@@ -24,7 +24,6 @@ use Koha::Database;
 use base qw(Koha::Object);
 
 use Koha::Acquisition::Bookseller;
-use Koha::ContractPermissions;
 
 =head1 NAME
 Koha::Contract - Koha Contract Object class

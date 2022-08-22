@@ -3,8 +3,11 @@ package Koha::Plugin::Com::ByWaterSolutions::Contracts;
 use Modern::Perl;
 
 use C4::Installer qw(TableExists);
+use C4::Context qw(userenv);
+use Koha::Patrons;
 
 use JSON qw(decode_json);
+use List::MoreUtils qw( any );
 
 use base qw(Koha::Plugins::Base);
 
@@ -126,6 +129,32 @@ sub install {
     return 1;
 }
 
+sub configure {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    my $userenv = C4::Context->userenv;
+    my $logged_in_user = Koha::Patrons->find( $userenv->{number} );
+    my $template = $self->get_template({ file => 'config.tt' });
+    if( $logged_in_user->is_superlibrarian ){
+        if( $cgi->param('save') ){
+            my $auth_users = $cgi->param('authorized_users');
+            $self->store_data({
+                authorized_users => $auth_users
+            });
+            $self->go_home();
+        }
+        else {
+            my $auth_users = $self->retrieve_data('authorized_users');
+            $template->param( authorized_users => $auth_users );
+        }
+    } else {
+            $template->param( not_authorized => 1 );
+    }
+    print $cgi->header();
+    print $template->output();
+}
+
 sub tool {
     my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
@@ -136,15 +165,29 @@ sub tool {
 sub tool_step_1 {
     my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
+    my $userenv = C4::Context->userenv;
 
     my $biblionumber = $cgi->param('biblionumber');
     my $template = $self->get_template({ file => 'contracts.tt' });
+    $template->param( can_manage_contracts => 1 ) if $self->is_user_authorized({ borrowernumber => $userenv->{number} });
     my $count = Koha::Contracts->search()->count;
     $template->param( contracts_count => $count );
     $template->param( biblionumber => $biblionumber ) if $biblionumber;
     print $cgi->header();
     print $template->output();
 }
+
+sub is_user_authorized {
+    my ( $self, $params ) = @_;
+    my $borrowernumber = $params->{borrowernumber};
+
+    warn "got to check";
+    my $auth_users = $self->retrieve_data('authorized_users');
+
+    return any { $_ eq $borrowernumber } split(',',$auth_users);
+}
+
+
 
 sub upgrade {
     my ( $self, $args ) = @_;

@@ -71,6 +71,15 @@ sub delete_permission {
     my $c = shift->openapi->valid_input or return;
 
     my $permission_id = $c->validation->param('permission_id');
+    my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        warn "not auth";
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
 
@@ -88,13 +97,21 @@ sub delete_permission {
 
 sub update_permission {
     my $c = shift->openapi->valid_input or return;
-    my $patron = $c->stash('koha.user');
 
     my $permission_id = $c->validation->param('permission_id');
     my $permission_type= $c->validation->param('body')->{'permission_type'};
     my $permission_code= $c->validation->param('body')->{'permission_code'};
     my $form_signed= $c->validation->param('body')->{'form_signed'};
     my $note= $c->validation->param('body')->{'note'};
+    my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        warn "not auth";
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
 
@@ -104,6 +121,8 @@ sub update_permission {
         $permission->note( $note );
         $permission->store;
         $permission->discard_changes;
+
+        _update_contract( $permission, $patron );
 
 
 
@@ -120,12 +139,20 @@ sub update_permission {
 sub add_permission {
     my $c = shift->openapi->valid_input or return;
 
-    my $patron = $c->stash('koha.user');
     my $contract_id = $c->validation->param('body')->{'contract_id'};
     my $permission_type= $c->validation->param('body')->{'permission_type'};
     my $permission_code= $c->validation->param('body')->{'permission_code'};
     my $form_signed= $c->validation->param('body')->{'form_signed'};
     my $note= $c->validation->param('body')->{'note'};
+    my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        warn "not auth";
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $permission = Koha::ContractPermission->new({
             contract_id => $contract_id,
@@ -154,6 +181,12 @@ sub _update_contract {
     $contract->updated_user( $patron->id );
     $contract->updated_on( undef );
     $contract->store();
+}
+
+sub _check_auth {
+    my $patron = shift;
+    my $plugin = Koha::Plugin::Com::ByWaterSolutions::Contracts->new();
+    return $plugin->is_user_authorized({ borrowernumber => $patron->id });
 }
 
 1;

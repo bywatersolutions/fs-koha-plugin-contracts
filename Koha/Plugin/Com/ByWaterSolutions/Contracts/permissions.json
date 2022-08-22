@@ -137,6 +137,9 @@
       "responses": {
         "200": {
           "description": "A list of permissions"
+        },
+        "403": {
+          "description": "You are not authorized to add permissions"
         }
       }
     }
@@ -218,6 +221,9 @@
       "responses": {
         "200": {
           "description": "A list of permissions"
+        },
+        "403": {
+          "description": "You are not authorized to update permissions"
         }
       }
     },
@@ -239,6 +245,9 @@
       "responses": {
         "204": {
           "description": "Permission deleted"
+        },
+        "403": {
+          "description": "You are not authorized to delete permissions"
         }
       }
     }

@@ -25,6 +25,8 @@ use Koha::Contracts;
 use Koha::ContractPermissions;
 use Koha::ContractResources;
 
+use Koha::Plugin::Com::ByWaterSolutions::Contracts;
+
 use CGI;
 use Try::Tiny;
 
@@ -57,6 +59,7 @@ sub get_contract {
     my $c = shift->openapi->valid_input or return;
 
     my $contract_id = $c->validation->param('contract_id');
+
     return try {
         my $contract = Koha::Contracts->find({ contract_id => $contract_id });
         return $c->render(
@@ -75,6 +78,13 @@ sub add_contract {
     my $contract_number = $c->validation->param('body')->{'contract_number'};
     my $supplier_id = $c->validation->param('body')->{'supplier_id'};
     my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $contract = Koha::Contract->new({
             contract_number => $contract_number,
@@ -102,7 +112,14 @@ sub update_contract {
     my $contract_number= $c->validation->param('body')->{'contract_number'};
     my $supplier_id = $c->validation->param('body')->{'supplier_id'};
     my $patron = $c->stash('koha.user');
-    warn " $contract_id $contract_number $supplier_id";
+
+    unless( _check_auth( $patron ) ){
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $contract = Koha::Contracts->find({ contract_id => $contract_id });
 
@@ -127,6 +144,15 @@ sub delete_contract {
     my $c = shift->openapi->valid_input or return;
 
     my $contract_id = $c->validation->param('contract_id');
+    my $patron = $c->stash('koha.user');
+    unless( _check_auth( $patron ) ){
+        warn "not auth";
+        return $c->render(
+            status => 403,
+            openapi => { error => "You are not allowed" }
+        );
+    }
+
     return try {
         my $contract = Koha::Contracts->find({ contract_id => $contract_id });
 
@@ -142,31 +168,10 @@ sub delete_contract {
     };
 }
 
-=head3 contracts
-Method to search contracts
-=cut
-
-sub contracts {
-
-    my $c = shift->openapi->valid_input or return;
-
-    my $query   = $c->validation->param('query');
-    my $offset   = $c->validation->param('offset');
-
-    return try {
-        my $contract   = Koha::Contract->new();
-
-        return $c->render(
-            status => 200,
-            json   => $contract
-        );
-    }
-    catch {
-        return $c->render(
-            status  => 500,
-            openapi => { error => "Unhandled exception ($_)" }
-        );
-    };
+sub _check_auth {
+    my $patron = shift;
+    my $plugin = Koha::Plugin::Com::ByWaterSolutions::Contracts->new();
+    return $plugin->is_user_authorized({ borrowernumber => $patron->id });
 }
 
 1;
