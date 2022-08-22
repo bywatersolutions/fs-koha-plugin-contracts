@@ -26,6 +26,12 @@
           "required": false,
           "type": "string"
       }, {
+          "name": "isbn",
+          "in": "query",
+          "description": "Search on isbn",
+          "required": false,
+          "type": "string"
+      }, {
           "name": "subtitle",
           "in": "query",
           "description": "Search on subtitle",
@@ -104,9 +110,11 @@
         "items": {
           "type": "string",
           "enum": [
+              "biblioitem",
               "items"
           ]
-        }
+        },
+        "collectionFormat": "csv"
       }
       ],
       "responses": {

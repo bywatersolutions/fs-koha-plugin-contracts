@@ -67,6 +67,25 @@ sub get_permission {
     };
 }
 
+sub delete_permission {
+    my $c = shift->openapi->valid_input or return;
+
+    my $permission_id = $c->validation->param('permission_id');
+    return try {
+        my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
+
+        $permission->delete;
+
+        return $c->render(
+            status  => 204,
+            openapi => $permission
+        );
+    }
+    catch {
+        $c->unhandled_exception($_);
+    };
+}
+
 sub update_permission {
     my $c = shift->openapi->valid_input or return;
     my $patron = $c->stash('koha.user');

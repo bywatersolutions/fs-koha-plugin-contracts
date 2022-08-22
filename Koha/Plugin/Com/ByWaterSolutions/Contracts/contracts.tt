@@ -29,7 +29,7 @@
 
 <div class="main container-fluid">
     <div class="row">
-        <div class="col-sm-10 col-sm-push-2">
+        <div class="col-sm-12">
             <main>
 
             <div id="contracts_list">
@@ -40,15 +40,11 @@
                 <table id="contracts_table">
                     <thead>
                         <tr>
-                            <th>Contract Id</th>
-                            <th>Supplier Id</th>
                             <th>Contract Number</th>
+                            <th>Supplier Id</th>
                             <th>Permissions</th>
                             <th>Resources</th>
-                            <th>Created On</th>
-                            <th>Created By</th>
-                            <th>Updated On</th>
-                            <th>Updated By</th>
+                            <th>Info</th>
                             <th>&nbsp;</th>
                         </tr>
                     </thead>
@@ -102,15 +98,17 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">x</button>
-                <h3 id="search_biblios_label">Find resource: <span id="contract_edit_modal_name"></span</h3>
+                <h3 id="search_biblios_label">Add resource to Permission #<span id="permission_resource"></span>: <span id="contract_edit_modal_name"></span</h3>
             </div>
             <div class="modal-body">
                 <div class="resource_search">
                     <table id="biblios_table" width="100%">
                         <thead><tr>
+                            <th>Id</th>
                             <th>Title</th>
-                            <th>Subtitle</th>
                             <th>Author</th>
+                            <th>ISBN</th>
+                            <th>Action</th>
                         </tr></thead>
                     </table>
                 </div>
@@ -134,7 +132,6 @@
         let filters_table;
         function tempAlert(id,msg,duration) {
             let el = $("#"+id);
-            console.log( el );
             el.text(msg);
             setTimeout(function(){
              el.text("");
@@ -149,22 +146,51 @@
                     "url": "/api/v1/contrib/contracts/biblios"
                 },
                 "stateSave": true,
+                "embed": ["biblioitem","items"], 
                 "columns": [
                     {
-                        "data": "title",
+                        "data": "biblio_id",
                         "searchable": true,
                         "orderable": true
                     },
                     {
-                        "data": "subtitle",
+                        "data": "title:subtitle",
                         "searchable": true,
-                        "orderable": true
+                        "orderable": true,
+                        "render": function( data, type, row, meta ) {
+                            let sub = row.subtitle ? row.subtitle : "";
+                            let complete_title = '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=' + row.biblio_id + '">';
+                            complete_title += row.title + " " + sub;
+                            complete_title += '</a>';
+                            return complete_title;
+                        }
                     },
                     {
                         "data": "author",
                         "searchable": true,
                         "orderable": true
+                    },
+                    {
+                        "data": function(row,type,set){
+                            console.log( row );
+                            isbn = row.biblioitem.isbn;
+                            return isbn;
+                        },
+                        "searchable": true,
+                        "orderable": true,
+                    },
+                    {
+                        "data": "biblionumber",
+                        "searchable": false,
+                        "orderable": false,
+                        "render": function( data, type, row, meta ) {
+                            let add_button = '<a class="btn btn-default btn-xs add_new_resource" data-biblionumber="';
+                            add_button += row.biblio_id + '">Add resource</a>';
+                            return add_button;
+                        }
+
                     }
+
                 ]
             }, null, 1);
 
@@ -176,7 +202,7 @@
                 "embed": ["copyright_holder","permissions.resources.biblio"], 
                 "columns": [
                     {
-                        "data": "contract_id",
+                        "data": "contract_number",
                         "searchable": true,
                         "orderable": true
                     },
@@ -188,34 +214,35 @@
                             var supplier = "";
                             if( row.copyright_holder ){
                                 let ch = row.copyright_holder;
+                                supplier += '<a target="_blank" href="/cgi-bin/koha/acqui/supplier.pl?booksellerid=' + ch.id + '">';
                                 supplier += ch.name;
+                                supplier += '</a>';
                                 supplier += " ("+ch.id+")</br>";
-                                supplier += ch.notes;
+                                supplier += ch.notes ? ch.notes : "";
                             }
                             return supplier;
                         }
-                    },
-                    {
-                        "data": "contract_number",
-                        "searchable": true,
-                        "orderable": true
                     },
                     {
                         "data": "permissions.permission_id:permissions.permission_type",
                         "searchable": true,
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
-                            var perms ="";
+                            var perms ='';
                             row.permissions.forEach(function(e){
-                                perms += e.permission_id + " " + e.permission_type + " " + e.permission_code ;
+                                perms +='<ul title="'+e.permission_id+'">';
+                                perms += '<li>' + e.permission_type + '</li>';
+                                perms += '<li>' + e.permission_code + '</li>';
+                                perms += '<li>Signed: ' + (e.form_signed?"Yes":"No") + '</li>';
+                                perms += e.note ? ('<li>Note: ' + e.note + '</li>') : "";
                                 [% IF biblionumber %]
-                                    let biblionumber="[% biblionumber %]";
+                                    let biblionumber="[% biblionumber | html %]";
                                     let bib_linked = false;
                                     e.resources.forEach(function(r){
                                         if( r.biblionumber == biblionumber ){ bib_linked=true;return false; }
                                     });
                                     if( !bib_linked ){
-                                       perms += '<a class="btn btn-default btn-xs link_resource" data-biblionumber="[% biblionumber %]" data-permission_id="'+e.permission_id+'">Link to bib</a>';
+                                       perms += '<a class="btn btn-default btn-xs link_resource" data-biblionumber="[% biblionumber %]" data-permission_id="'+e.permission_id+'">Link to bib ([% biblionumber | html %])</a>';
                                     }
                                 [% END %]
                                 perms += '</br><hr>';
@@ -224,50 +251,44 @@
                         },
                     },
                     {
-                        "data": "permissions.resources.biblionumber:permissions.resources.resource_id:permissions.resources.biblio.title",
+                        "data": "permissions.resources.biblionumber:permissions.resources.resource_id:permissions.resources.biblio.title:permissions.resources.biblio.author",
                         "searchable": true,
                         "orderable": true,
-                        "render": function( data, type, row, meta ) {
-                            var perms ="";
+                        "render": function( data, type, row, meta ) {i
+                            var resources ="";
                             row.permissions.forEach(function(e){
+                                resources += '<ul title="'+e.permission_id+'">';
                                 e.resources.forEach(function(r){
-                                    perms += "Resource " + r.resource_id + ", biblionumber:" + r.biblionumber + "</br>";
-                                    if( r.biblio ){
-                                        perms += r.biblio.title + "</br>";
-                                    }
-                                perms += "<hr>";
+                                    resources += '<li><ul class="contract_resource">';
+                                    resources += '<li>' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber="';
+                                    resources += r.biblionumber + '">'+(r.biblio?r.biblio.title:'Title not found');
+                                    resources += "(" + r.biblionumber + ")</a></li>";
+                                    resources += "<li>" + (r.biblio?(r.biblio.author?r.biblio.author:"-"):"-") + "</li>";
+                                    resources += "<li>" + (r.biblio?(r.biblio.isbn?r.biblio.isbn:"-"):"-") + "</li>";
+                                    resources += '</ul></li>';
                                 });
+                                resources += '</ul>';
+                                resources += '<a class="btn btn-default btn-xs add_resource" data-permission_id="';
+                                resources += e.permission_id + '">Add resource (';
+                                resources += e.permission_id + ')</a>';
+                                resources += "<hr>";
                             });
-                            perms += '<a class="btn btn-default btn-xs add_resource">Add resource</a>'
-                            return perms;
+                            return resources;
                         },
-                    },
-                    {
-                        "data": "created_on",
-                        "searchable": true,
-                        "orderable": true,
-                        "render": function( data, type, row, meta ) {
-                            return data ? escape_str($date(data)) : "";
-                        }
                     },
                     {
                         "data": "created_user",
                         "searchable": true,
-                        "orderable": true
-                    },
-                    {
-                        "data": "updated_on",
-                        "searchable": true,
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
-                            return data ? escape_str($date(data)) : "";
+                            let c_info = "Created: ";
+                            let created = row.created_on ? escape_str($date(row.created_on)) : "";
+                            let updated = row.updated_on ? escape_str($date(row.updated_on)) : "";
+                            c_info += created + '(' + row.created_user + ')</br>';
+                            c_info += "Updated: "; 
+                            c_info += updated + '(' + row.updated_user + ')';
+                            return c_info;
                         }
-
-                    },
-                    {
-                        "data": "updated_user",
-                        "searchable": true,
-                        "orderable": true
                     },
                     {
                         "data": function( row, meta, val, type ) {
@@ -329,8 +350,19 @@
                     note: ""
                 }]);
             });
+            $("body").on('click', '.delete_permission',function() {
+                    let element = $(this).parent('div');
+                    ContractFunctions.delete_permission(element);
+            });
             $("body").on('click', '.add_resource',function() {
+                let cur_per = $(this).data('permission_id');
+                $("#permission_resource").data('permission_id',cur_per).text(cur_per);
                 $("#add_resource_modal").modal('show');
+            });
+            $("body").on('click', '.add_new_resource',function() {
+                let biblionumber = $(this).data('biblionumber');
+                let permission_id = $("#permission_resource").data('permission_id');
+                ContractFunctions.add_resource(permission_id,biblionumber);
             });
                 
 
@@ -347,7 +379,6 @@
             v_select: function(element) {
 
             element.kohaSelect({
-                dropdownParent: $("#edit_contract_modal"),
                 width: '30%',
                 allowClear: false,
                 ajax: {
@@ -357,11 +388,10 @@
                    dataType: 'json',
                    data: function (params) {
                        var search_term = (params.term === undefined) ? '' : params.term;
-                       var cur_p = (params.page === undefined) ? '0' : params.page;
                        var query = {
                            "q": JSON.stringify({"name":{"-like":'%'+search_term+'%'}}),
                            "_order_by": "name",
-                           "_page": cur_p
+                           "_page": params.page
                         };
 
                         return query;
@@ -460,6 +490,26 @@
                     });
             },
 
+            delete_permission: function(element){
+                let permission_id = $(element).data('permission_id');
+                let options = {
+                    url: '/api/v1/contrib/contracts/permissions/' + permission_id,
+                    method: "DELETE",
+                    contentType: "application/json",
+                };
+                $.ajax(options)
+                    .then(function(result) {
+                        let permission_id = $(element).find('input[name="permission_edit_id"]').val();
+                        element.remove();
+                        humanMsg.displayAlert( _("Permission successfully deleted."), { className: 'human Success' } );
+                        contracts_table.DataTable().ajax.reload();
+                    })
+                    .fail(function(err) {
+                        humanMsg.displayAlert( _("There was an error during deletion:") + err.responseText, { className: 'humanError' } );
+                    });
+            },
+
+
             update_contract: function(element){
                 let contract_id = $(element).find('input[name="contract_edit_id"]').val();
                 var url = '/api/v1/contrib/contracts/contracts';
@@ -507,9 +557,8 @@
                 let permission_type = $(element).find('select[name="permission_edit_type"] option:selected').text();
                 let permission_code = $(element).find('input[name="permission_edit_code"]').val();
                 let permission_date = $(element).find('input[name="permission_edit_date"]').val();
-                console.log( permission_date);
                 let contract_signed = $(element).find('input[name="permission_edit_signed"]').is(':checked')?1:0;
-                let note            = $(element).find('input[name="permission_edit_note"]').val();
+                let note            = $(element).find('textarea[name="permission_edit_note"]').val();
                 let options = {
                     url: url,
                     method: method,
@@ -548,7 +597,8 @@
 
                         let permissions_section = '<hr>';
                         permissions.forEach(function(p,index){
-                            permissions_section += '<div class="permission-edit" data-type="update_permission">';
+                            permissions_section += '<div class="permission-edit" data-type="update_permission"'
+                            permissions_section += 'data-permission_id="' + p.permission_id + '">';
                             permissions_section += '<fieldset class="rows"><legend>Permissions</legend><ul>';
                             permissions_section += '<input type="hidden" id="contract_edit_id" name="contract_edit_id" value="'+p.contract_id+'">';
                             permissions_section += '<input type="hidden" class="permission_edit_id" name="permission_edit_id" value="'+p.permission_id+'">';
@@ -576,7 +626,7 @@
                             permissions_section += '</li>';
                             permissions_section += '</ul></fieldset>';
                             permissions_section += '<div id="permission_updated_'+p.permission_id+'"></div>';
-                            permissions_section += '<a id="delete_existing_permission" class="btn btn-default btn-xs">Delete</a></div>';
+                            permissions_section += '<a class="btn btn-default btn-xs delete_permission">Delete</a></div>';
                             permissions_section += '<hr>';
                             permissions_section += '</div>';
                         });
