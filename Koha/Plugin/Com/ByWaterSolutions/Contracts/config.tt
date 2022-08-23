@@ -1,0 +1,54 @@
+[% USE raw %]
+[% USE Asset %]
+[% SET footerjs = 1 %]
+[% USE AuthorisedValues %]
+[% INCLUDE 'doc-head-open.inc' %]
+  <title>Koha: Contracts plugin: Config</title>
+  [% INCLUDE 'doc-head-close.inc' %]
+</head>
+
+<body id="plugin_contracts_config">
+  [% INCLUDE 'header.inc' %]
+  [% INCLUDE 'cat-search.inc' %]
+
+<nav id="breadcrumbs" aria-label="Breadcrumb" class="breadcrumb">
+    <ol>
+        <li>
+            <a href="/cgi-bin/koha/mainpage.pl">Home</a>
+        </li>
+        <li>
+            <a href="/cgi-bin/koha/plugins/plugins.pl">Plugins</a>
+        </li>
+        <li>
+            <a href="#" aria-current="page">
+                Koha Contracts Config
+            </a>
+        </li>
+    </ol>
+</nav>
+
+<div class="main container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <main>
+                [% UNLESS not_authorized %]
+                <form method="get">
+                    <input type="hidden" name="class" value="[% CLASS %]"/>
+                    <input type="hidden" name="method" value="[% METHOD %]"/>
+                    <input type="hidden" name="save" value="1"/>
+
+                    <fieldset>
+                        <label for="authorized_users">Authorized users:</label>
+                        <input name="authorized_users" value="[% authorized_users | html %]"/>
+                    </fieldset>
+                    <input type="submit" value="Save"/>
+                </form>
+                [% ELSE %]
+                <h2>You must be a superlibrarian to configure this plugin</h2>
+                [% END %]
+            </main>
+        </div>
+    </div>
+</div>
+
+[% INCLUDE 'intranet-bottom.inc' %]
