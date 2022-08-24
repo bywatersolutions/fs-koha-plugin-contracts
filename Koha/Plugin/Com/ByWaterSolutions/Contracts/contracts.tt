@@ -216,6 +216,7 @@
                         "searchable": true,
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
+                            console.log( row);
                             var supplier = "";
                             if( row.copyright_holder ){
                                 let ch = row.copyright_holder;
@@ -224,6 +225,8 @@
                                 supplier += '</a>';
                                 supplier += " ("+ch.id+")</br>";
                                 supplier += ch.notes ? ch.notes : "";
+                            } else {
+                                supplier += "(" + row.supplier_id + ")";
                             }
                             return supplier;
                         }
