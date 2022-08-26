@@ -6,15 +6,18 @@ if( $("#catalog_detail").length > 0 ){
 
     function add_contract_data(resources){
         $.each(resources,function(index,resource){
-            let result = '<td class="contract"><fieldset>';
+            let result = '<tr class="contract_row"><td class="contract"><fieldset>';
             result +=    '<legend>Contract number: ' + resource.permission.contract.contract_number + '</legend>';
             result +=    '<ul>'
             result +=      '<li>';
             result +=        'Copyright holder: ';
             if( resource.permission.contract.copyright_holder ){
+                result += '<a href="/cgi-bin/koha/acqui/supplier.pl?booksellerid=';
+                result += resource.permission.contract.supplier_id + '" target="_blank">';
                 result += resource.permission.contract.copyright_holder.name;
+                result += '</a>';
             }
-            result +=      '(' + resource.permission.contract.suplier_id + ')';
+            result +=      '(' + resource.permission.contract.supplier_id + ')';
             result +=      '</li>';
             result +=      '<li>';
             result +=        'Permission type: ' + resource.permission.permission_type;
@@ -33,9 +36,9 @@ if( $("#catalog_detail").length > 0 ){
             result +=      '</li>';
             result +=    '</li>';
             result +=    '</ul>';
-            result +=    '</fieldset></td>';
+            result +=    '</fieldset></td></tr>';
                 console.log( result);
-            $("#contracts_row").append(result);
+            $("#contracts_table").append(result);
         });
     }
 
@@ -51,7 +54,7 @@ if( $("#catalog_detail").length > 0 ){
             $('#contracts_tab_title').text("Contracts (" + result.length + ")");
             if( result.length > 0 ){
 
-                $("#contracts_content").append('<table id="contracts_table"><tr id="contracts_row"></tr>');
+                $("#contracts_content").append('<table id="contracts_table">');
                 console.log( result );
                 add_contract_data( result );
             } else {}

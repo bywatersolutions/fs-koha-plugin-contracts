@@ -135,8 +135,14 @@ __PACKAGE__->belongs_to(
   "supplier",
   "Koha::Schema::Result::Aqbookseller",
   { id => "supplier_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
+
 
 
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-06-30 13:38:58
@@ -156,11 +162,16 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-__PACKAGE__->might_have(
+__PACKAGE__->belongs_to(
   "copyright_holder",
   "Koha::Schema::Result::Aqbookseller",
   { "foreign.id" => "self.supplier_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

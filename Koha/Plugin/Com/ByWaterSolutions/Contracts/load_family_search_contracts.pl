@@ -41,7 +41,7 @@ $line->{'PERMISSION DATE'} ||= '1900-01-01';
 
 unless( defined $vendor{ $line->{"SUPPLIER ID"} } ){
      my $bookseller = Koha::Acquisition::Booksellers->find({ accountnumber => $line->{"SUPPLIER ID"} });
-     $vendor{ $line->{"SUPPLIER ID"} } = $bookseller ? $bookseller->id : 0; 
+     $vendor{ $line->{"SUPPLIER ID"} } = $bookseller ? $bookseller->id : undef; 
 }
 
 

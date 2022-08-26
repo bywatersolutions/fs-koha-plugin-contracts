@@ -130,6 +130,7 @@
     [% INCLUDE 'datatables.inc' %]
     [% INCLUDE 'select2.inc' %]
     [% INCLUDE 'calendar.inc' %]
+    [% INCLUDE 'js-date-format.inc' %]
 
     <script>
         let filters_table;
@@ -317,7 +318,7 @@
                             contract_buttons += ' data-contract_id="'+ contract.contract_id;
                             contract_buttons += '" data-contract_number="'+ contract.contract_number;
                             contract_buttons += '" ><i class="fa fa-pencil"></i> Edit contract</a>';
-                            contract_buttons += '<a class="btn btn-default btn-xs delete_contract" onclick="ContractFunctions.delete_contract(this)"';
+                            contract_buttons += '<a class="btn btn-default btn-xs delete_contract"';
                             contract_buttons += ' data-contract_id="'+ contract.contract_id;
                             contract_buttons += '"><i class="fa fa-trash"></i> Delete</a>';
                             return contract_buttons;
@@ -371,13 +372,23 @@
                     note: ""
                 }]);
             });
+            $("body").on('click', '.delete_contract',function() {
+                    let element = $(this);
+                    if( window.confirm('Do you want to delete this contract? Doing so will remove all associated permissions and resources (title will not be deleted)') ){
+                        ContractFunctions.delete_contract(element);
+                    }
+            });
             $("body").on('click', '.delete_permission',function() {
                     let element = $(this).parent('div');
-                    ContractFunctions.delete_permission(element);
+                    if( window.confirm('Do you want to delete this resource?') ){
+                        ContractFunctions.delete_permission(element);
+                    }
             });
             $("body").on('click', '.delete_resource',function() {
                     let element = $(this).parent('li');
-                    ContractFunctions.delete_resource(element);
+                    if( window.confirm('Do you want to delete this resource?') ){
+                        ContractFunctions.delete_resource(element);
+                    } 
             });
             $("body").on('click', '.add_resource',function() {
                 let cur_per = $(this).data('permission_id');
@@ -669,15 +680,17 @@
                             permissions_section += '<label for="permission_edit_note">Note:</label>';
                             permissions_section += '<textarea name="permission_edit_note" rows="5" cols="40" class="contract_update"></textarea>';
                             permissions_section += '</li>';
-                            permissions_section += '<li><fieldset><legend>Resources</legend><ul>';
-                            p.resources.forEach(function(r,index){
-                                permissions_section += '<li data-resource_id="'+r.resource_id+'">' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+ r.biblionumber + '">';
-                                permissions_section += (r.biblio?r.biblio.title:'Title not found');
-                                permissions_section += "(" + r.biblionumber + ")</a>";
-                                permissions_section += (r.biblio?(r.biblio.author?" by "+r.biblio.author:"-"):"-");
-                                permissions_section += '<a class="delete_resource" data-resource_id="'+r.resource_id+'"><i class="fa fa-times"></i></a>';
-                                permissions_section += '</li>';
+                            if( p.resources ){
+                                permissions_section += '<li><fieldset><legend>Resources</legend><ul>';
+                                p.resources.forEach(function(r,index){
+                                    permissions_section += '<li data-resource_id="'+r.resource_id+'">' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+ r.biblionumber + '">';
+                                    permissions_section += (r.biblio?r.biblio.title:'Title not found');
+                                    permissions_section += "(" + r.biblionumber + ")</a>";
+                                    permissions_section += (r.biblio?(r.biblio.author?" by "+r.biblio.author:"-"):"-");
+                                    permissions_section += '<a class="delete_resource" data-resource_id="'+r.resource_id+'"><i class="fa fa-times"></i></a>';
+                                    permissions_section += '</li>';
                                 });
+                            }
                             permissions_section += '</ul></fieldset></li>';
                             permissions_section += '</ul></fieldset>';
                             permissions_section += '<div id="permission_updated_'+p.permission_id+'"></div>';

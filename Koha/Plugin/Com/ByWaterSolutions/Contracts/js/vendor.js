@@ -1,9 +1,23 @@
+$.getScript("/intranet-tmpl/lib/moment/moment.min.js");
+
 if( $("#acq_supplier").length > 0 ){
 
+    let getUrlParameter = function getUrlParameter(sParam) {
+    let sPageURL = window.location.search.substring(1),
+            sURLVariables = sPageURL.split('&'),
+            sParameterName,
+            i;
+        for (i = 0; i < sURLVariables.length; i++) {
+            sParameterName = sURLVariables[i].split('=');
+            if (sParameterName[0] === sParam) {
+                return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+            }
+        }
+	};
     $("main").append('<div id="vendor_contracts"></div>');
     function add_contract_data(contracts){
         $.each(contracts,function(index,contract){
-            let result = '<td class="contract"><fieldset>';
+            let result = '<tr><td class="contract"><fieldset>';
             result +=    '<legend>Contract number: ' + contract.contract_number + '</legend>';
             result +=    '<ul>'
             result +=      '<li>';
@@ -31,19 +45,23 @@ if( $("#acq_supplier").length > 0 ){
                 result +=      '</li>';
                 $.each(permission.resources,function(index,resource){
                     result +=      '<li>';
+                    result +=      '<li>';
                     result +=        'Resource: (' + resource.biblionumber + ') ';
                     if( resource.biblio ){
+                        result += '<a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='
+                        result += resource.biblionumber+'" target="_blank">';
                         result += resource.biblio.title;
+                        result += '</a>';
                     }
                     result +=      '</li>';
                 });
             });
             result +=    '</ul>';
-            result +=    '</fieldset></td>';
-            $("#contracts_row").append(result);
+            result +=    '</fieldset></td></tr>';
+            $("#contracts_table").append(result);
         });
     }
-    let vendor_id = $('input[name="booksellerid"]').val();
+    let vendor_id = getUrlParameter('booksellerid');
     console.log(vendor_id);
     let options = {
         url: '/api/v1/contrib/contracts/contracts',
@@ -57,7 +75,7 @@ if( $("#acq_supplier").length > 0 ){
             $('#contracts_tab_title').text("Contracts (" + result.length + ")");
             if( result.length > 0 ){
 
-                $("#vendor_contracts").append('<table id="contracts_table"><tr id="contracts_row"></tr>');
+                $("#vendor_contracts").append('<table id="contracts_table">');
                 console.log( result );
                 add_contract_data( result );
             } else {}

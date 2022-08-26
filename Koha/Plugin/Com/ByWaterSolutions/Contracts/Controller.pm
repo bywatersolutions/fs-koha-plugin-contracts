@@ -156,6 +156,13 @@ sub delete_contract {
     return try {
         my $contract = Koha::Contracts->find({ contract_id => $contract_id });
 
+        my $permissions = $contract->permissions;
+        while ( my $permission = $permissions->next ){
+            my $resources = $permission->resources;
+            $resources->delete;
+            $permission->delete;
+        }
+        $contract->discard_changes;
         $contract->delete;
 
         return $c->render(
