@@ -130,9 +130,9 @@
     [% INCLUDE 'datatables.inc' %]
     [% INCLUDE 'select2.inc' %]
     [% INCLUDE 'calendar.inc' %]
-    [% INCLUDE 'js-date-format.inc' %]
 
     <script>
+        $.getScript("/intranet-tmpl/lib/moment/moment.min.js");
         let filters_table;
         function tempAlert(id,msg,duration) {
             let el = $("#"+id);
@@ -302,8 +302,8 @@
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
                             let c_info = "Created: ";
-                            let created = row.created_on ? escape_str($date(row.created_on)) : "";
-                            let updated = row.updated_on ? escape_str($date(row.updated_on)) : "";
+                            let created = row.created_on ? escape_str(moment(row.created_on).format('LL')) : "";
+                            let updated = row.updated_on ? escape_str(moment(row.updated_on).format('LL')) : "";
                             c_info += created + '(' + row.created_user + ')</br>';
                             c_info += "Updated: "; 
                             c_info += updated + '(' + row.updated_user + ')';
