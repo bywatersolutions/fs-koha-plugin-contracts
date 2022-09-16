@@ -29,6 +29,9 @@ if( $("#acq_supplier").length > 0 ){
             result +=      '</li>';
             $.each(contract.permissions,function(index,permission){
                 result +=      '<li>';
+                result +=        'Permission number: ' + permission.permission_id;
+                result +=      '</li>';
+                result +=      '<li>';
                 result +=        'Permission type: ' + permission.permission_type;
                 result +=      '</li>';
                 result +=      '<li>';

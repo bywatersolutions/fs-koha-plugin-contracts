@@ -240,6 +240,7 @@
                             var perms ='';
                             row.permissions.forEach(function(e){
                                 perms +='<ul title="'+e.permission_id+'">';
+                                perms += '<li>Permission number:' + e.permission_id + '</li>';
                                 perms += '<li>' + e.permission_type + '</li>';
                                 perms += '<li>' + e.permission_code + '</li>';
                                 perms += '<li>Signed: ' + (e.form_signed?"Yes":"No") + '</li>';

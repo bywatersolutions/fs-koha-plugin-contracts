@@ -2,7 +2,7 @@ if( $("#catalog_detail").length > 0 ){
 
     $("#bibliodetails ul").append('<li role="presentation"><a id="contracts_tab_title" href="#contracts" aria-controls="contracts" role="tab" data-toggle="tab">Contracts</a></li>');
     $("#bibliodetails .tab-content").append('<div role="tabpanel" class="tab-pane" id="contracts"><div id="contracts_content"><h3>Contracts</h3></div></div>');
-    $("#contracts_content").append('<a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3AContracts&method=tool&biblionumber='+biblionumber+'" target="popup" onclick="window.open("/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3AContracts&method=tool&biblionumber='+biblionumber+'"); return false;">Link to contract</a>');
+    $("#contracts_content").append('<a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3AContracts&method=tool&biblionumber='+biblionumber+'" target="_blank" >Link to contract</a>');
 
     function add_contract_data(resources){
         $.each(resources,function(index,resource){
@@ -18,6 +18,9 @@ if( $("#catalog_detail").length > 0 ){
                 result += '</a>';
             }
             result +=      '(' + resource.permission.contract.supplier_id + ')';
+            result +=      '</li>';
+            result +=      '<li>';
+            result +=        'Permission number: ' + resource.permission.permission_id;
             result +=      '</li>';
             result +=      '<li>';
             result +=        'Permission type: ' + resource.permission.permission_type;
