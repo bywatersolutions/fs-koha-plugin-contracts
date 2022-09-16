@@ -308,7 +308,7 @@
                             let link_start = '<a target="_blank" href="/cgi-bin/koha/members/moremember.pl?borrowernumber=';
                             c_info += created + '(' + link_start + row.created_user + '">' + row.created_user + '</a>)</br>';
                             c_info += "Updated: "; 
-                            c_info += updated + '(' + link_start + row.updated_user + '">' + row.updated_user '</a>)';
+                            c_info += updated + '(' + link_start + row.updated_user + '">' + row.updated_user + '</a>)';
                             return c_info;
                         }
                     [% IF (can_manage_contracts) %]
