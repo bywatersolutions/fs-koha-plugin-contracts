@@ -48,7 +48,6 @@ if( $("#acq_supplier").length > 0 ){
                 result +=      '</li>';
                 $.each(permission.resources,function(index,resource){
                     result +=      '<li>';
-                    result +=      '<li>';
                     result +=        'Resource: (' + resource.biblionumber + ') ';
                     if( resource.biblio ){
                         result += '<a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='

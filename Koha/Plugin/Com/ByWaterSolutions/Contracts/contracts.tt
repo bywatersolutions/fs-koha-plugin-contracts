@@ -300,14 +300,15 @@
                     {
                         "data": "created_user:updated_user:created_on:updated_on",
                         "searchable": true,
-                        "orderable": true,
+                        "orderable": false,
                         "render": function( data, type, row, meta ) {
                             let c_info = "Created: ";
                             let created = row.created_on ? escape_str(moment(row.created_on).format('LL')) : "";
                             let updated = row.updated_on ? escape_str(moment(row.updated_on).format('LL')) : "";
-                            c_info += created + '(' + row.created_user + ')</br>';
+                            let link_start = '<a target="_blank" href="/cgi-bin/koha/members/moremember.pl?borrowernumber=';
+                            c_info += created + '(' + link_start + row.created_user + '">' + row.created_user + '</a>)</br>';
                             c_info += "Updated: "; 
-                            c_info += updated + '(' + row.updated_user + ')';
+                            c_info += updated + '(' + link_start + row.updated_user + '">' + row.updated_user '</a>)';
                             return c_info;
                         }
                     [% IF (can_manage_contracts) %]
