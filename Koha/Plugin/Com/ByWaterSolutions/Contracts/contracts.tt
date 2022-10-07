@@ -642,8 +642,17 @@
             },
 
             add_permissions: function( permissions ){
-                        [% SET perm_types = AuthorisedValues.GetAuthValueDropbox( 'PERMISSION_TYPES' ) %]
-                        [% IF perm_types.count %]
+                        [%# SET perm_types = AuthorisedValues.GetAuthValueDropbox( 'PERMISSION_TYPES' ) %]
+                        [% SET perm_types = [
+                            { authorised_value = "A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K3a M3a N4a U4a U4r U4c U5a U5r U5c U5e U5f U6a U6r U6c U7a U7r U7c U7e U7f V3" lib = "Limited Permission Granted" }
+                            { authorised_value = "A1 B4b C1 D2 E1 F9 G2 H2 I1 J1 K2j M3a N4a U4b U4s U4d U5b U5s U5d U5g U6b U6s U6d U7b U7s U7d U7g V2j" lib = "Protected" }
+                            { authorised_value = "" lib = "Contract Conditions" }
+                            { authorised_value = "A1 B8a C1 D2 E1 F2a F2b G2 H2 I1 J9 K2h M3a N4a P1 P4 P13 P15 U4b U4s U4d U5b U5s U5d U5g U6b U6s U6d U7b U7s U7d U7g V2h" lib = "Permission Denied" }
+                            { authorised_value = "A1 B1a C1 D1 E1 F1 G1 H1 I1 J1 K3 M1 N1 U4a U4r U4c U5a U5r U5c U5e U5f U6a U6r U6c U7a U7r U7c U7e U7f V3" lib = "Permission Granted" }
+                            { authorised_value = "A1 B1a C1 D1 E1 F1 G1 H1 I1 J1 K1 M1 N1 U4a U4r U4c U5a U5r U5c U5e U5f U6a U6r U6c U7a U7r U7c U7e U7f V1" lib = "Public Domain, No Notice" }
+                            { authorised_value = "A1 B1a C1 D1 E1 F1 G1 H1 I1 J1 K1 M1 N1 U4a U4r U4c U5a U5r U5c U5e U5f U6a U6r U6c U7a U7r U7c U7e U7f V1" lib = "Public Domain" }
+                        ] %]
+                        [% IF perm_types.size %]
                             [% SET perm_dropdown = '' %]
                             [% FOREACH perm IN perm_types %]
                                  [% perm_dropdown = perm_dropdown _ '<option value="' _ perm.authorised_value _ '">' _ perm.lib _ '</option>' %]
@@ -662,7 +671,9 @@
                             permissions_section += '<input type="hidden" class="permission_edit_id" name="permission_edit_id" value="'+p.permission_id+'">';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_type">Permission type:</label>';
+                            [% IF perm_types.size %]
                             permissions_section += '<select class="permission_type" name="permission_edit_type" data-initial="'+p.permission_code+'">'
+                            [% END %]
                             permissions_section += '[% perm_dropdown %]'
                             permissions_section += '</li>';
                             permissions_section += '<li>';
