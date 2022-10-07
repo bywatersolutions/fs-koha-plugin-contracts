@@ -59,7 +59,7 @@
      </div> <!-- /.row -->
 
     <div id="edit_contract_modal" class="modal" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">x</button>
@@ -678,7 +678,7 @@
                             permissions_section += '</li>';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_code">Permission Code:</label>';
-                            permissions_section += '<input name="permission_edit_code" type="text" class="contract_update permission_edit_code" value="'+p.permission_code +'">';
+                            permissions_section += '<input name="permission_edit_code" type="text" size="100" class="contract_update permission_edit_code" value="'+p.permission_code +'">';
                             permissions_section += '</li>';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_date">Permission date:</label>';
