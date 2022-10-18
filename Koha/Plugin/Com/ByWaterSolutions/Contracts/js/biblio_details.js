@@ -39,10 +39,33 @@ if( $("#catalog_detail").length > 0 ){
             result +=      '</li>';
             result +=    '</li>';
             result +=    '</ul>';
+            result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';
             result +=    '</fieldset></td></tr>';
                 console.log( result);
             $("#contracts_table").append(result);
         });
+    }
+    $("body").on('click', '.delete_resource',function() {
+            if( window.confirm('Do you want to delete this resource?') ){
+                delete_resource( this );
+            }
+    });
+
+    function delete_resource( the_button ){
+        let resource_id = $( the_button ).data('resource_id');
+        let options = {
+            url: '/api/v1/contrib/contracts/resources/' + resource_id,
+            method: "DELETE",
+            contentType: "application/json",
+        };
+        $.ajax(options)
+            .then(function(result) {
+                alert( "Permission successfully deleted.");
+                $(the_button).closest('tr').remove();
+            })
+            .fail(function(err) {
+                alert("There was an error during deletion:" + err.responseText );
+            });
     }
 
     let options = {
@@ -58,7 +81,6 @@ if( $("#catalog_detail").length > 0 ){
             if( result.length > 0 ){
 
                 $("#contracts_content").append('<table id="contracts_table">');
-                console.log( result );
                 add_contract_data( result );
             } else {}
                 

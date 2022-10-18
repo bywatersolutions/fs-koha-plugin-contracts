@@ -255,7 +255,7 @@
                                        perms += '<a class="btn btn-default btn-xs link_resource" data-biblionumber="[% biblionumber %]" data-permission_id="'+e.permission_id+'">Link to bib ([% biblionumber | html %])</a>';
                                     }
                                 [% END %]
-                                perms += '</br><hr>';
+                                perms += '</ul></br><hr>';
                             });
                             return perms;
                         },
