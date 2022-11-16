@@ -691,7 +691,7 @@
                             permissions_section += '</li>';
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_note">Note:</label>';
-                            permissions_section += '<textarea name="permission_edit_note" rows="5" cols="40" class="contract_update"></textarea>';
+                            permissions_section += '<textarea name="permission_edit_note" rows="5" cols="40" class="contract_update">' + p.note + '</textarea>';
                             permissions_section += '</li>';
                             if( p.resources ){
                                 permissions_section += '<li><fieldset><legend>Resources</legend><ul>';
