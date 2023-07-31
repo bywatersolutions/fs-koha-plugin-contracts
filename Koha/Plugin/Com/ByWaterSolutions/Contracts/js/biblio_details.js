@@ -29,7 +29,7 @@ if( $("#catalog_detail").length > 0 ){
             result +=        'Permission code: ' + resource.permission.permission_code;
             result +=      '</li>';
             result +=      '<li>';
-            result +=        'Permission date: ' + moment(resource.permission.permission_date).format('LL');
+            result +=        'Permission date: ' + dayjs(resource.permission.permission_date).format('MMMM DD, YYYY');
             result +=      '</li>';
             result +=      '<li>';
             result +=        'Form signed: ' + resource.permission.form_signed;

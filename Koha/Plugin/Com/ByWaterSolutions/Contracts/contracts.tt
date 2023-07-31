@@ -132,7 +132,7 @@
     [% INCLUDE 'calendar.inc' %]
 
     <script>
-        $.getScript("/intranet-tmpl/lib/moment/moment.min.js");
+        $.getScript("/intranet-tmpl/lib/dayjs/dayjs.min.js");
         let filters_table;
         function tempAlert(id,msg,duration) {
             let el = $("#"+id);
@@ -303,8 +303,8 @@
                         "orderable": false,
                         "render": function( data, type, row, meta ) {
                             let c_info = "Created: ";
-                            let created = row.created_on ? escape_str(moment(row.created_on).format('LL')) : "";
-                            let updated = row.updated_on ? escape_str(moment(row.updated_on).format('LL')) : "";
+                            let created = row.created_on ? escape_str(dayjs(row.created_on).format('MMMM DD, YYYY')) : "";
+                            let updated = row.updated_on ? escape_str(dayjs(row.updated_on).format('MMMM DD, YYYY')) : "";
                             let link_start = '<a target="_blank" href="/cgi-bin/koha/members/moremember.pl?borrowernumber=';
                             c_info += created + '(' + link_start + row.created_user + '">' + row.created_user + '</a>)</br>';
                             c_info += "Updated: "; 

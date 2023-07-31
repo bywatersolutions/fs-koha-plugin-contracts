@@ -13,7 +13,7 @@ use base qw(Koha::Plugins::Base);
 
 ## Here we set our plugin version
 our $VERSION         = "{VERSION}";
-our $MINIMUM_VERSION = "21.11.00";
+our $MINIMUM_VERSION = "22.11.00";
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {

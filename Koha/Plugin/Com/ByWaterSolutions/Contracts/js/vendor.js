@@ -1,4 +1,4 @@
-$.getScript("/intranet-tmpl/lib/moment/moment.min.js");
+$.getScript("/intranet-tmpl/lib/dayjs/dayjs.min.js");
 
 if( $("#acq_supplier").length > 0 ){
 
@@ -38,7 +38,7 @@ if( $("#acq_supplier").length > 0 ){
                 result +=        'Permission code: ' + permission.permission_code;
                 result +=      '</li>';
                 result +=      '<li>';
-                result +=        'Permission date: ' + moment(permission.permission_date).format('LL');
+                result +=        'Permission date: ' + dayjs(permission.permission_date).format('MMMM DD, YYYY');
                 result +=      '</li>';
                 result +=      '<li>';
                 result +=        'Form signed: ' + permission.form_signed;
