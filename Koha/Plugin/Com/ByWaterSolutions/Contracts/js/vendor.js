@@ -64,7 +64,6 @@ if( $("#acq_supplier").length > 0 ){
         });
     }
     let vendor_id = getUrlParameter('booksellerid');
-    console.log(vendor_id);
     let options = {
         url: '/api/v1/contrib/contracts/contracts',
         method: "GET",
@@ -78,7 +77,6 @@ if( $("#acq_supplier").length > 0 ){
             if( result.length > 0 ){
 
                 $("#vendor_contracts").append('<table id="contracts_table">');
-                console.log( result );
                 add_contract_data( result );
             } else {}
                 

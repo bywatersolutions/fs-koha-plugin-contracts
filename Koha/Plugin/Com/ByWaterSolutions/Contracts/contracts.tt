@@ -162,7 +162,6 @@
                         "searchable": true,
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
-                        console.log(row);
                             let sub = row.subtitle ? row.subtitle : "";
                             let complete_title = '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=' + row.biblio_id + '">';
                             complete_title += row.title + " " + sub;
@@ -217,7 +216,6 @@
                         "searchable": true,
                         "orderable": true,
                         "render": function( data, type, row, meta ) {
-                            console.log( row);
                             var supplier = "";
                             if( row.copyright_holder ){
                                 let ch = row.copyright_holder;
@@ -340,7 +338,6 @@
             $("body").on('change', 'select.permission_type',function() {
                 let parent_form = $(this).closest('div');
                 let parent_type = parent_form.data('type');
-                console.log( $(this) );
                 parent_form.find('input[name=permission_edit_code]').val( $(this).val() );
                 ContractFunctions[parent_type](parent_form);
             });

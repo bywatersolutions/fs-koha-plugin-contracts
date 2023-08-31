@@ -41,7 +41,6 @@ if( $("#catalog_detail").length > 0 ){
             result +=    '</ul>';
             result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';
             result +=    '</fieldset></td></tr>';
-                console.log( result);
             $("#contracts_table").append(result);
         });
     }

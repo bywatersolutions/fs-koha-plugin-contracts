@@ -247,31 +247,6 @@ sub intranet_js {
     return q|
     <script src="/api/v1/contrib/contracts/static/js/vendor.js"></script>
     <script src="/api/v1/contrib/contracts/static/js/biblio_details.js"></script>
-    <script>
-/**
-    let contract = {
-      "Permission_Code": "A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K1",
-      "Permission_type": "Permission Granted",
-      "Copyright_holder": "Grant, Fred T.",
-      "Supplier_code": "18B3A",
-      "Contract_number": "7300-041848/1",
-      "Permission_number": "5",
-      "Permission_date": "11/26/2000",
-      "Note": "This is a note",
-      "Form_signed": "N",
-      "Title_number": "987196"
-    };
-
-
-
-    add_contract_modal([contract]);
-
-    if ($("body#catalog_detail").length > 0 && contract ){
-      $("h1.title").after('<a href="#" id="title_contracts">Show contract (Example, display test)</a>');
-    }
-    $("body").on('click','#title_contracts',function(){console.log('click');$("#contract_modal").modal({show:true});});
-    **/
-    </script>
     |;
 }
 
