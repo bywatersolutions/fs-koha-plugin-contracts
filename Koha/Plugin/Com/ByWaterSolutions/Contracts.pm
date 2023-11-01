@@ -181,7 +181,6 @@ sub is_user_authorized {
     my ( $self, $params ) = @_;
     my $borrowernumber = $params->{borrowernumber};
 
-    warn "got to check";
     my $auth_users = $self->retrieve_data('authorized_users');
 
     return any { $_ eq $borrowernumber } split(',',$auth_users);

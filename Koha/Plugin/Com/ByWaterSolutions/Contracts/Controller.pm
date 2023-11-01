@@ -146,7 +146,6 @@ sub delete_contract {
     my $contract_id = $c->validation->param('contract_id');
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
-        warn "not auth";
         return $c->render(
             status => 403,
             openapi => { error => "You are not allowed" }

@@ -76,7 +76,6 @@ sub add_resource {
     my $biblionumber = $c->validation->param('body')->{'biblionumber'};
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
-        warn "not auth";
         return $c->render(
             status => 403,
             openapi => { error => "You are not allowed" }
@@ -110,7 +109,6 @@ sub update_resource {
     my $biblionumber = $c->validation->param('body')->{'biblionumber'};
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
-        warn "not auth";
         return $c->render(
             status => 403,
             openapi => { error => "You are not allowed" }
@@ -143,7 +141,6 @@ sub delete_resource {
     my $resource_id = $c->validation->param('resource_id');
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
-        warn "not auth";
         return $c->render(
             status => 403,
             openapi => { error => "You are not allowed" }

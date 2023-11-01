@@ -73,7 +73,6 @@ sub delete_permission {
     my $permission_id = $c->validation->param('permission_id');
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
-        warn "not auth";
         return $c->render(
             status => 403,
             openapi => { error => "You are not allowed" }
@@ -105,7 +104,6 @@ sub update_permission {
     my $note= $c->validation->param('body')->{'note'};
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
-        warn "not auth";
         return $c->render(
             status => 403,
             openapi => { error => "You are not allowed" }
@@ -146,7 +144,6 @@ sub add_permission {
     my $note= $c->validation->param('body')->{'note'};
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
-        warn "not auth";
         return $c->render(
             status => 403,
             openapi => { error => "You are not allowed" }
