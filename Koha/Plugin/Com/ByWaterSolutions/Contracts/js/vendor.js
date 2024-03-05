@@ -1,5 +1,3 @@
-$.getScript("/intranet-tmpl/lib/dayjs/dayjs.min.js");
-
 if( $("#acq_supplier").length > 0 ){
 
     let getUrlParameter = function getUrlParameter(sParam) {
