@@ -39,7 +39,7 @@ if( $("#acq_supplier").length > 0 ){
                 result +=        'Permission date: ' + dayjs(permission.permission_date).format('MMMM DD, YYYY');
                 result +=      '</li>';
                 result +=      '<li>';
-                result +=        'Form signed: ' + permission.form_signed;
+                result +=        'Form signed: ' + (permission.form_signed ? "Yes" : "0");
                 result +=      '</li>';
                 result +=      '<li>';
                 result +=        'Note: ' + permission.note;
