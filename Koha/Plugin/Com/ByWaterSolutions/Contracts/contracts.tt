@@ -238,9 +238,10 @@
                             var perms ='';
                             row.permissions.forEach(function(e){
                                 perms +='<ul title="'+e.permission_id+'">';
-                                perms += '<li>Permission number:' + e.permission_id + '</li>';
+                                perms += '<li>Permission number: ' + e.permission_id + '</li>';
                                 perms += '<li>' + e.permission_type + '</li>';
                                 perms += '<li>' + e.permission_code + '</li>';
+                                perms += '<li>Permission date: ' + escape_str(dayjs(e.permission_date).format('MMMM DD, YYYY')) + '</li>';
                                 perms += '<li>Signed: ' + (e.form_signed?"Yes":"No") + '</li>';
                                 perms += e.note ? ('<li>Note: ' + e.note + '</li>') : "";
                                 [% IF biblionumber %]

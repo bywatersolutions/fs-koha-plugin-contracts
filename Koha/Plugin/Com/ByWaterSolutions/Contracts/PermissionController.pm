@@ -98,8 +98,10 @@ sub update_permission {
     my $c = shift->openapi->valid_input or return;
 
     my $permission_id = $c->validation->param('permission_id');
-    my $permission_type= $c->validation->param('body')->{'permission_type'};
-    my $permission_code= $c->validation->param('body')->{'permission_code'};
+    my $permission_type = $c->validation->param('body')->{'permission_type'};
+    my $permission_code = $c->validation->param('body')->{'permission_code'};
+    my $permission_date = $c->validation->param('body')->{'permission_date'};
+    warn 'date' . Data::Dumper::Dumper( $permission_date );
     my $form_signed= $c->validation->param('body')->{'form_signed'};
     my $note= $c->validation->param('body')->{'note'};
     my $patron = $c->stash('koha.user');
@@ -115,6 +117,7 @@ sub update_permission {
 
         $permission->permission_type( $permission_type ) if $permission_type;
         $permission->permission_code( $permission_code ) if $permission_code;
+        $permission->permission_date( $permission_date ) if $permission_date;
         $permission->form_signed( $form_signed );
         $permission->note( $note );
         $permission->store;
