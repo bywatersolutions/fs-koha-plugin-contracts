@@ -7,6 +7,6 @@ for biblios within Koha.
 
 Download from the release page
 
-# Plguin Configuration
+# Plugin Configuration
 
 TBA
