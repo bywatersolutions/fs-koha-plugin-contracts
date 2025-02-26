@@ -8,118 +8,119 @@
 </head>
 
 <body id="plugin_contracts">
-  [% INCLUDE 'header.inc' %]
-  [% INCLUDE 'cat-search.inc' %]
+    [% INCLUDE 'header.inc' %]
+    [% INCLUDE 'cat-search.inc' %]
 
-<nav id="breadcrumbs" aria-label="Breadcrumb" class="breadcrumb">
-    <ol>
-        <li>
-            <a href="/cgi-bin/koha/mainpage.pl">Home</a>
-        </li>
-        <li>
-            <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a>
-        </li>
-        <li>
-            <a href="#" aria-current="page">
-                Koha Contracts Plugin
-            </a>
-        </li>
-    </ol>
-</nav>
+    [% WRAPPER 'sub-header.inc' %]
+        [% WRAPPER breadcrumbs %]
+            [% IF blocking_error %]
+                [% WRAPPER breadcrumb_item bc_active= 1 %]
+                    <span>Plugins</span>
+                [% END %]
+            [% ELSE %]
+                [% WRAPPER breadcrumb_item %]
+                    <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a>
+                [% END %]
+                [% WRAPPER breadcrumb_item bc_active= 1 %]
+                    <span>Contracts plugin</span>
+                [% END %]
+            [% END %]
+        [% END #/ WRAPPER breadcrumbs %]
+    [% END #/ WRAPPER sub-header.inc %]
 
-<div class="main container-fluid">
-    <div class="row">
-        <div class="col-sm-12">
-            <main>
+    <div class="main container-fluid">
+        <div class="row">
+            <div class="col-sm-12">
+                <main>
 
-            <div id="contracts_list">
-                <h2>Contracts</h2>
-                    [% IF (can_manage_contracts) %]
-                        <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="">
-                        <i class="fa fa-plus"></i> New contract
-                        </a>
-                    [% END %]
-                <table id="contracts_table">
-                    <thead>
-                        <tr>
-                            <th>Contract Number</th>
-                            <th>Supplier Id</th>
-                            <th>Permissions</th>
-                            <th>Resources</th>
-                            <th>Info</th>
-                            [% IF (can_manage_contracts) %]<th>&nbsp;</th>[% END %]
-                        </tr>
-                    </thead>
-                </table>
-            </div>
-
-            </main>
-        </div> <!-- /.col-sm-10.col-sm-push-2 -->
-
-     </div> <!-- /.row -->
-
-    <div id="edit_contract_modal" class="modal" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">x</button>
-                <h3 id="search_filters_label">Edit contract: <span id="contract_edit_modal_name"></span</h3>
-            </div>
-            <div class="modal-body">
-                <div class="contract-edit" data-type="update_contract">
-                <fieldset class="rows">
-                    <legend>Contract</legend>
-                    <ul>
-                        <li>
-                            <input type="hidden" id="contract_edit_id" name="contract_edit_id">
-                            <label for="contract_edit_number">Number:</label>
-                            <input id="contract_edit_number" name="contract_edit_number" type="text" class="contract_update">
-                        </li>
-                        <li>
-                            <label  for="vendor_select">Copyright holder</label>
-                            <select name="vendor_selector" id="vendor_select" class="contract_update">
-                            </select>
-                        </li>
-                    </ul>
-                    <div id="contract_updated"></div>
-                </fieldset>
-                <hr>
-                </div>
-                <fieldset id="permissions_editor">
-                </fieldset>
-                <a id="new_permission" class="btn btn-default btn-xs new_permission">Add permission</a>
-            </div>
-            <div class="modal-footer">
-                <a href="#" data-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
-            </div>
-        </div>
-        </div>
-    </div>
-    <div id="add_resource_modal" class="modal" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="closebtn" data-dismiss="modal" aria-hidden="true">x</button>
-                <h3 id="search_biblios_label">Add resource to Permission #<span id="permission_resource"></span>: <span id="contract_edit_modal_name"></span</h3>
-            </div>
-            <div class="modal-body">
-                <div class="resource_search">
-                    <table id="biblios_table" width="100%">
-                        <thead><tr>
-                            <th>Id</th>
-                            <th>Title</th>
-                            <th>Author</th>
-                            <th>ISBN</th>
-                            <th>Publisher</th>
-                            <th>Action</th>
-                        </tr></thead>
+                <div id="contracts_list">
+                    <h2>Contracts</h2>
+                        [% IF (can_manage_contracts) %]
+                            <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="">
+                            <i class="fa fa-plus"></i> New contract
+                            </a>
+                        [% END %]
+                    <table id="contracts_table">
+                        <thead>
+                            <tr>
+                                <th>Contract Number</th>
+                                <th>Supplier Id</th>
+                                <th>Permissions</th>
+                                <th>Resources</th>
+                                <th>Info</th>
+                                [% IF (can_manage_contracts) %]<th>&nbsp;</th>[% END %]
+                            </tr>
+                        </thead>
                     </table>
                 </div>
+
+                </main>
+            </div> <!-- /.col-sm-10.col-sm-push-2 -->
+
+         </div> <!-- /.row -->
+
+        <div id="edit_contract_modal" class="modal" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 id="search_filters_label">Edit contract: <span id="contract_edit_modal_name"></span</h1>
+                    <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+                </div>
+                <div class="modal-body">
+                    <div class="contract-edit" data-type="update_contract">
+                    <fieldset class="rows">
+                        <legend>Contract</legend>
+                        <ul>
+                            <li>
+                                <input type="hidden" id="contract_edit_id" name="contract_edit_id">
+                                <label for="contract_edit_number">Number:</label>
+                                <input id="contract_edit_number" name="contract_edit_number" type="text" class="contract_update">
+                            </li>
+                            <li>
+                                <label  for="vendor_select">Copyright holder</label>
+                                <select name="vendor_selector" id="vendor_select" class="contract_update">
+                                </select>
+                            </li>
+                        </ul>
+                        <div id="contract_updated"></div>
+                    </fieldset>
+                    <hr>
+                    </div>
+                    <fieldset id="permissions_editor">
+                    </fieldset>
+                    <a id="new_permission" class="btn btn-default btn-xs new_permission">Add permission</a>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
+                </div>
             </div>
-            <div class="modal-footer">
-                <a href="#" data-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
             </div>
         </div>
+        <div id="add_resource_modal" class="modal" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 id="search_biblios_label">Add resource to Permission #<span id="permission_resource"></span>: <span id="contract_edit_modal_name"></span</h1>
+                    <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+                </div>
+                <div class="modal-body">
+                    <div class="resource_search">
+                        <table id="biblios_table" width="100%">
+                            <thead><tr>
+                                <th>Id</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>ISBN</th>
+                                <th>Publisher</th>
+                                <th>Action</th>
+                            </tr></thead>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
+                </div>
+            </div>
         </div>
     </div>
 

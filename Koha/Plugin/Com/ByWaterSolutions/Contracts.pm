@@ -224,15 +224,15 @@ sub intranet_head {
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <button type="button" class="closebtn" data-dismiss="modal" aria-label="Close">x</button>
-                        <h3 class="modal-title">Contract Info</h3>
+                        <h1 class="modal-title">Contract Info</h1>
+                        <button type="button" class="closebtn" data-bs-dismiss="modal" aria-label="Close">x</button>
                     </div>
                     <div class="modal-body">
                         <table id="contract_modal_results" class="table">
                         </table>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
