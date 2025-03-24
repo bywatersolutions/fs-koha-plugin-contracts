@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - master
     tags:
       - 'v*.*.*'
   schedule:
@@ -21,15 +21,19 @@ jobs:
     - name: Is a tag?
       run: |
         echo "${{ startsWith(github.ref, 'refs/tags/v') }}"
+
     - name: GitHub Ref 1
       run: |
         echo "${GITHUB_REF##*/}"
+
     - name: GitHub Ref 2
       run: |
         echo "${{ github.event.ref }}"
+
     - name: GitHub Ref 3
       run: |
         echo "${{ github.ref }}"
+
     - name: Dump env
       run: env | sort
 
@@ -75,6 +79,7 @@ jobs:
         echo "ROOT DIR: $ROOT_DIR"
         echo "SYNC_REPO: $SYNC_REPO"
         ls -alh $SYNC_REPO
+
     - name: Set up koha-testing-docker
       run: |
         sudo sysctl -w vm.max_map_count=262144
@@ -95,8 +100,8 @@ jobs:
         pwd
         ls -alh
         echo "`date`: Installing YAML::Syck, needed for Koha 20.11 and earlier"
-        docker exec koha-koha-1 apt-get install -y libyaml-syck-perl libemail-valid-perl
-        while [ $? -ne 0 ]; do echo "INSTALL YAML::Syck" && docker exec koha-koha-1 apt-get install -y libyaml-syck-perl libemail-valid-perl; done
+        #docker exec koha-koha-1 apt-get install -y libyaml-syck-perl libemail-valid-perl libmojo-jwt-perl
+        #while [ $? -ne 0 ]; do echo "INSTALL YAML::Syck" && docker exec koha-koha-1 apt-get install -y libyaml-syck-perl libemail-valid-perl; done
         echo "SLEEPING 3 MINUTES"
         sleep 60
         echo "1 MINUTE DONE"
@@ -105,8 +110,6 @@ jobs:
         sleep 60
         echo "3 MINUTES DONE"
         echo "WAKING UP"
-        docker exec koha-koha-1 bash -c 'cpanm WWW::Twilio::TwiML WWW::Form::UrlEncoded'
-        docker cp $GITHUB_REPO/. koha-koha-1:/var/lib/koha/kohadev/plugins
         echo "DOCKER LOGS"
         docker logs koha-koha-1 2>&1
         echo "/DOCKER LOGS"
@@ -116,11 +119,11 @@ jobs:
     - name: Post test cleanup
       run: |
         docker compose down
-        docker rm -f $(docker ps -a -f "name=koha-" -q)
         docker volume prune -f
         docker image  prune -f
         rm docker-compose.yml
         rm -rf env .env
+
   release:
     name: Build & Release
     runs-on: ubuntu-latest
@@ -138,11 +141,13 @@ jobs:
         GITHUB_REPO="${parts[1]}"
         echo ::set-output name=github_repo::$GITHUB_REPO
         echo "GITHUB REPO: $GITHUB_REPO"
+
         TAG_VERSION="${GITHUB_REF##*/}"
         echo "TAG VERSION: $TAG_VERSION"
         TAG_VERSION="${TAG_VERSION:1}"
         echo "TAG VERSION 2: $TAG_VERSION"
         echo ::set-output name=tag_version::$TAG_VERSION
+
     - name: Get Koha Version Branch Name
       id: koha-version-oldstable
       uses: "bywatersolutions/github-action-koha-get-version-by-label@master"
@@ -152,6 +157,7 @@ jobs:
     - name: Print minimum version
       run: |
         echo "Current oldstable version: ${{ steps.koha-version-oldstable.outputs.version-major-minor }}"
+
     - name: Dump myvars outputs
       env:
         GITHUB_CONTEXT: ${{ toJson(steps.myvars.outputs) }}
@@ -164,12 +170,13 @@ jobs:
         release-version: ${{ steps.myvars.outputs.tag_version }}
         release-name: ${{ steps.myvars.outputs.github_repo }}
         minimum-version: ${{ steps.koha-version-oldstable.outputs.version-major-minor }}
-        plugin-module: 'Koha/Plugin/Com/ByWaterSolutions/Contracts.pm'
+        plugin-module: "Koha/Plugin/Com/ByWaterSolutions/Hoopla.pm"
 
     - name: See if kpz was created
       run: |
         echo "FILENAME: ${{ steps.kpz.outputs.filename }}"
         ls -alh
+
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
@@ -179,3 +186,19 @@ jobs:
           CHANGELOG.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  keepalive:
+    name: Keep Alive
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Check age and push commit if needed
+      run: |
+        LAST_COMMIT=$( git --no-pager log -1 --format=%ct )
+        NOW=$(date +%s)
+        DIFF=$(($NOW-$LAST_COMMIT))
+        DAYS=$(($DIFF/86400))
+        git config --global user.email kyle@bywatersolutions.com
+        git config --global user.name "Kyle M Hall"
+        git commit --allow-empty -m "Automated commit from keep alive workflow"
+        if [ "$DAYS" -gt "50" ]; then git push; fi
