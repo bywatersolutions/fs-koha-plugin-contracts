@@ -421,6 +421,7 @@
             element.kohaSelect({
                 width: '30%',
                 allowClear: false,
+                dropdownParent: $('#edit_contract_modal'),
                 ajax: {
                    url: '/api/v1/acquisitions/vendors',
                    delay: 300,
@@ -449,7 +450,8 @@
                         return { "results": results, "pagination": { "more": data.pagination.more } };
                     }
                 },
-                templateResult: ContractFunctions.display_vendor
+                templateResult: ContractFunctions.display_vendor,
+                //templateSelection: ContractFunctions.display_vendor
             });
                return element;
             },
