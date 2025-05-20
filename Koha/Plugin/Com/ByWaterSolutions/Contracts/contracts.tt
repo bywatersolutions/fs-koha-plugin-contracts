@@ -36,7 +36,7 @@
                 <div id="contracts_list">
                     <h2>Contracts</h2>
                         [% IF (can_manage_contracts) %]
-                            <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="">
+                            <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="" data-rvn="">
                             <i class="fa fa-plus"></i> New contract
                             </a>
                         [% END %]
@@ -47,6 +47,7 @@
                                 <th>Supplier Id</th>
                                 <th>Permissions</th>
                                 <th>Resources</th>
+                                <th>RVN</th>
                                 <th>Info</th>
                                 [% IF (can_manage_contracts) %]<th>&nbsp;</th>[% END %]
                             </tr>
@@ -77,8 +78,13 @@
                                 <input id="contract_edit_number" name="contract_edit_number" type="text" class="contract_update">
                             </li>
                             <li>
-                                <label  for="vendor_select">Copyright holder</label>
+                                <label  for="vendor_select">Copyright holder:</label>
                                 <select name="vendor_selector" id="vendor_select" class="contract_update">
+                                </select>
+                            </li>
+                            <li>
+                                <label  for="rvn">RVN:</label>
+                                <textarea id="rvn" name="rvn" rows="5" cols="40" class="contract_update"></textarea>
                                 </select>
                             </li>
                         </ul>
@@ -298,6 +304,11 @@
                         },
                     },
                     {
+                        "data": "rvn",
+                        "searchable": true,
+                        "orderable": true,
+                    },
+                    {
                         "data": "created_user:updated_user:created_on:updated_on",
                         "searchable": true,
                         "orderable": false,
@@ -319,6 +330,7 @@
                             let contract_buttons = '<a class="btn btn-default btn-xs edit_contract" ';
                             contract_buttons += ' data-contract_id="'+ contract.contract_id;
                             contract_buttons += '" data-contract_number="'+ contract.contract_number;
+                            contract_buttons += '" data-rvn="'+ contract.rvn;
                             contract_buttons += '" ><i class="fa fa-pencil"></i> Edit contract</a>';
                             contract_buttons += '<a class="btn btn-default btn-xs delete_contract"';
                             contract_buttons += ' data-contract_id="'+ contract.contract_id;
@@ -370,7 +382,7 @@
                     permission_type: "Permission Granted",
                     permission_code: "A1 B1a C1 D2 E1 F1 G2 H2 I1 J1 K3",
                     form_signed: 0,
-                    note: ""
+                    note: "",
                 }]);
             });
             $("body").on('click', '.delete_contract',function() {
@@ -479,6 +491,7 @@
             edit_contract:  function(element){
                 let contract_id = $(element).data('contract_id');
                 let contract_number = $(element).data('contract_number');
+                let rvn = $(element).data('rvn');
 
                 if ( contract_id != "new" ){
                 let options = {
@@ -493,6 +506,7 @@
                         result = result[0];
                         $("#contract_edit_number").val(result.contract_number);
                         $("#contract_edit_id").val(result.contract_id);
+                        $("#rvn").val(result.rvn);
                         if(result.copyright_holder){
                         $("#vendor_select").select2('destroy');
                             $("#vendor_select").html(''); 
@@ -510,6 +524,7 @@
                 } else {
                         $("#contract_edit_number").val("new");
                         $("#contract_edit_id").val("new");
+                        $('#rvn').val("");
                         $("#edit_contract_modal").modal('show');
                 }
 
@@ -579,7 +594,8 @@
                     url = url + '/' + contract_id
                 }
                 let contract_number = $(element).find('input[name="contract_edit_number"]').val();
-                let supplier_id =     $(element).find('#vendor_select').val();
+                let supplier_id     =     $(element).find('#vendor_select').val();
+                let rvn             =     $(element).find('#rvn').val();
                 let options = {
                     url: url,
                     method: method,
@@ -587,6 +603,7 @@
                     data: JSON.stringify({
                         contract_number: contract_number,
                         supplier_id: supplier_id?supplier_id:"",
+                        rvn: rvn ? rvn : "",
                     })
                 };
                 $.ajax(options)
@@ -628,7 +645,7 @@
                         permission_date: permission_date,
                         permission_code: permission_code,
                         form_signed:     contract_signed,
-                        note:            note
+                        note:            note,
                     })
                 };
                 $.ajax(options)
@@ -730,13 +747,15 @@
         };
 
 
-        function save_contract(id,contract_number){
+        function save_contract(id,contract_number,rvn){
+            console.log(rvn)
             let options = {
                 url: '/api/v1/contrib/contracts/contracts/' + id,
                 method: "PUT",
                 contentType: "application/json",
                 data: JSON.stringify({
                     contract_number: contract_number,
+                    rvn: rvn,
                 })
             };
             $.ajax(options)

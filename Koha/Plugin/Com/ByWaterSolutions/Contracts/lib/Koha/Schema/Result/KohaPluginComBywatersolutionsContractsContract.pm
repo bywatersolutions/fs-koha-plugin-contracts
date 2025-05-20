@@ -65,6 +65,12 @@ __PACKAGE__->table("koha_plugin_com_bywatersolutions_contracts_contracts");
   data_type: 'integer'
   is_nullable: 0
 
+=head2 rvn
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 255
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -92,6 +98,8 @@ __PACKAGE__->add_columns(
   },
   "updated_user",
   { data_type => "integer", is_nullable => 0 },
+  "rvn",
+  { data_type => "varchar", is_nullable => 1, size => 255 },
 );
 
 =head1 PRIMARY KEY
