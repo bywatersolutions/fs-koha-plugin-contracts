@@ -192,6 +192,15 @@ sub is_user_authorized {
 sub upgrade {
     my ( $self, $args ) = @_;
 
+    my $dbh = C4::Context->dbh;
+    my $contracts_table = $self->get_qualified_table_name('contracts');
+
+    try {
+        $dbh->do("ALTER TABLE $contracts_table ADD rvn VARCHAR(255) AFTER updated_user");
+    } catch {
+        warn "ERROR DURING UPGRADE: $_";
+    }
+
     return 1;
 }
 
