@@ -266,7 +266,8 @@ sub api_routes {
     my $permissions_spec_str = $self->mbf_read('permissions.json');
     my $resources_spec_str = $self->mbf_read('resources.json');
     my $biblios_spec_str = $self->mbf_read('biblios.json');
-    my $spec     = { %{decode_json($contracts_spec_str)}, %{decode_json($permissions_spec_str)}, %{decode_json($resources_spec_str)},  %{decode_json($biblios_spec_str)} };
+    my $components_spec_str = $self->mbf_read('components.json');
+    my $spec     = { %{decode_json($contracts_spec_str)}, %{decode_json($permissions_spec_str)}, %{decode_json($resources_spec_str)},  %{decode_json($biblios_spec_str)}, %{decode_json($components_spec_str)} };
 
     return $spec;
 }

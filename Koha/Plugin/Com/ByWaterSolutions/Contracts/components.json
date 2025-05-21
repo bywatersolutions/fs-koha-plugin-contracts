@@ -1,0 +1,81 @@
+{
+  "/biblios/{biblionumber}/components": {
+    "get": {
+      "x-mojo-to": "Com::ByWaterSolutions::Contracts::BiblioController#get_components_for_biblio",
+      "operationId": "getComponentsForBiblio",
+      "tags": ["biblios"],
+      "parameters": [
+        {
+          "name": "biblionumber",
+          "in": "path",
+          "description": "Internal biblio identifier",
+          "required": true,
+          "type": "integer"
+        }
+      ],
+      "produces": [
+        "application/json"
+      ],
+      "responses": {
+        "200": {
+          "description": "A list of component relationships",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "relationship_type": {
+                  "type": "string",
+                  "description": "Type of relationship (host, constituent, etc.)"
+                },
+                "host_title": {
+                  "type": "string",
+                  "description": "Title of the host item"
+                },
+                "host_id": {
+                  "type": "string",
+                  "description": "Identifier of the host item"
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Biblio not found",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string",
+                "description": "Error message"
+              }
+            }
+          }
+        },
+        "500": {
+          "description": "Internal server error",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string",
+                "description": "Error message"
+              }
+            }
+          }
+        },
+        "503": {
+          "description": "Under maintenance",
+          "schema": {
+            "type": "object"
+          }
+        }
+      },
+      "x-koha-authorization": {
+        "permissions": {
+          "catalogue": "1"
+        }
+      }
+    }
+  }
+}
