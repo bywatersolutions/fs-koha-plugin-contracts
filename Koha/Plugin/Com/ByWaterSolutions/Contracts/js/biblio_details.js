@@ -6,6 +6,7 @@ if( $("#catalog_detail").length > 0 ){
 
     function add_contract_data(resources){
         $.each(resources,function(index,resource){
+            console.log(resource);
             let result = '<tr class="contract_row"><td class="contract"><fieldset>';
             result +=    '<legend>Contract number: ' + resource.permission.contract.contract_number + '</legend>';
             result +=    '<ul>'
@@ -43,6 +44,7 @@ if( $("#catalog_detail").length > 0 ){
             result +=    '</li>';
             result +=    '</ul>';
             result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';
+            result +=    '<a class="btn btn-default btn-xs manage_resource" data-bs-toggle="modal" data-bs-target="#components_modal" data-resource_id="' + resource.resource_id + '" data-biblio_id="' + resource.biblionumber + '">Manage contracts for issues/analytics</a>';
             result +=    '</fieldset></td></tr>';
             $("#contracts_table").append(result);
         });
@@ -91,4 +93,29 @@ if( $("#catalog_detail").length > 0 ){
              console.log( _("There was an error fetching the resources") + err.responseText );
         });
 
+    $('#components_modal').on('shown.bs.modal', function (e) {
+        var button = $(e.relatedTarget);
+        var biblio_id = button.data('biblio_id');
+        var resource_id = button.data('resource_id');
+        var url = '/api/v1/contrib/contracts/biblios/'+ biblio_id  +'/components';
+        $.ajax({
+            type: "GET",
+            url: url,
+            contentType: "application/json",
+            complete: function(data) {
+                $('#components_modal .modal-body table tbody').empty();
+                let response = data.responseJSON;
+                response.forEach( function(part) {
+                    $('#components_modal .modal-body table tbody').append(`
+                        <tr>
+                            <td><input type="checkbox" value="${resource_id}" /></td>
+                            <td>${part.related_id}</td>
+                            <td>${part.related_title}</td>
+                            <td>${part.relationship_type}</td>
+                        </tr>
+                    `);
+                });
+            }
+        });
+    });
 }
