@@ -51,4 +51,35 @@ sub list_biblios {
     };
 }
 
+sub get_components_for_biblio {
+    my $c = shift->openapi->valid_input or return;
+    
+    my $biblionumber = $c->validation->param('biblionumber');
+    return $c->render( status => 404, openapi => { error => "Biblionumber not found" } )
+        unless $biblionumber;
+    
+    my $biblio = Koha::Biblios->find($biblionumber);
+    return $c->render( status => 404, openapi => { error => "Biblio not found" } )
+        unless $biblio;
+    
+    # Custom component extraction instead of using get_marc_components()
+    my $marc_record = $biblio->metadata->record;
+    my @components = ();
+    
+    if ($marc_record) {
+        # Extract component information from relevant MARC fields
+        # 773 fields - this record is a component part of another record
+        foreach my $field ($marc_record->field('773')) {
+            push @components, {
+                relationship_type => 'host',
+                host_title => $field->subfield('t') || '',
+                host_id => $field->subfield('w') || '',
+            };
+        }
+        
+    }
+    
+    return $c->render( status => 200, openapi => \@components );
+}
+
 1;
