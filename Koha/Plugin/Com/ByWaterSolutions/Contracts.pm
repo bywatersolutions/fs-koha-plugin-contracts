@@ -262,6 +262,7 @@ sub intranet_head {
                                 <th>Related Biblio</th>
                                 <th>Related Title</th>
                                 <th>Relationship Type</th>
+                                <th>Linked to Contract</th>
                             <tr>
                         </thead>
                         <tbody>

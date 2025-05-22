@@ -6,7 +6,6 @@ if( $("#catalog_detail").length > 0 ){
 
     function add_contract_data(resources){
         $.each(resources,function(index,resource){
-            console.log(resource);
             let result = '<tr class="contract_row"><td class="contract"><fieldset>';
             result +=    '<legend>Contract number: ' + resource.permission.contract.contract_number + '</legend>';
             result +=    '<ul>'
@@ -44,7 +43,7 @@ if( $("#catalog_detail").length > 0 ){
             result +=    '</li>';
             result +=    '</ul>';
             result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';
-            result +=    '<a class="btn btn-default btn-xs manage_resource" data-bs-toggle="modal" data-bs-target="#components_modal" data-resource_id="' + resource.resource_id + '" data-biblio_id="' + resource.biblionumber + '">Manage contracts for issues/analytics</a>';
+            result +=    '<a class="btn btn-default btn-xs manage_resource" data-bs-toggle="modal" data-bs-target="#components_modal" data-contract_id="' + resource.permission.contract_id + '" data-biblio_id="' + resource.biblionumber + '">Manage contracts for issues/analytics</a>';
             result +=    '</fieldset></td></tr>';
             $("#contracts_table").append(result);
         });
@@ -96,7 +95,7 @@ if( $("#catalog_detail").length > 0 ){
     $('#components_modal').on('shown.bs.modal', function (e) {
         var button = $(e.relatedTarget);
         var biblio_id = button.data('biblio_id');
-        var resource_id = button.data('resource_id');
+        var contract_id = button.data('contract_id');
         var url = '/api/v1/contrib/contracts/biblios/'+ biblio_id  +'/components';
         $.ajax({
             type: "GET",
@@ -108,14 +107,57 @@ if( $("#catalog_detail").length > 0 ){
                 response.forEach( function(part) {
                     $('#components_modal .modal-body table tbody').append(`
                         <tr>
-                            <td><input type="checkbox" value="${resource_id}" /></td>
+                            <td><input type="checkbox" value="${contract_id}" /></td>
                             <td>${part.related_id}</td>
                             <td>${part.related_title}</td>
                             <td>${part.relationship_type}</td>
+                            <td class="contract-status-${part.related_id}"></td>
                         </tr>
                     `);
+                    // Check if this component has a contract
+                    checkComponentContract(part.related_id, contract_id).then(isLinked => {
+                        const statusCell = $(`.contract-status-${part.related_id}`);
+                        if (isLinked) {
+                            statusCell.html(`<span class="badge bg-success">Yes</span>`);
+                        } else {
+                            statusCell.html(`<span class="badge bg-danger">No</span>`);
+                        }
+                    });
                 });
             }
         });
     });
+
+    async function checkComponentContract(biblionumber, currentContractId) {
+        try {
+            const permissionsQuery = encodeURIComponent(`{"contract_id":"${currentContractId}"}`);
+            const permissionsResponse = await fetch(`/api/v1/contrib/contracts/permissions?q=${permissionsQuery}`);
+            
+            if (!permissionsResponse.ok) {
+                return false;
+            }
+            
+            const permissions = await permissionsResponse.json();
+            
+            for (let permission of permissions) {
+                const resourcesQuery = encodeURIComponent(`{"permission_id":"${permission.permission_id}"}`);
+                const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${resourcesQuery}`);
+                
+                if (resourcesResponse.ok) {
+                    const resources = await resourcesResponse.json();
+                    const foundResource = resources.find(resource => resource.biblionumber == biblionumber);
+                    if (foundResource) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            console.error(`Error checking contract for biblio ${biblionumber}:`, error);
+            return false;
+        }
+    }
+
+
 }
