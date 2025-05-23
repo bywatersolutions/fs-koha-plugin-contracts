@@ -48,10 +48,29 @@ if( $("#catalog_detail").length > 0 ){
             $("#contracts_table").append(result);
         });
     }
+
     $("body").on('click', '.delete_resource',function() {
             if( window.confirm('Do you want to delete this resource?') ){
                 delete_resource( this );
             }
+    });
+    
+    $('#select_all').on('click' , function(e) {
+        e.preventDefault();
+        $("input.resource_info").each(function() {
+            if ($(this).prop("checked") == false) {
+              $(this).prop("checked", true).change();
+            }
+        });
+    });
+
+    $('#clear_all').on('click' , function(e) {
+        e.preventDefault();
+        $("input.resource_info").each(function() {
+            if ($(this).prop("checked") == true) {
+              $(this).prop("checked", false).change();
+            }
+        });
     });
 
     function delete_resource( the_button ){
@@ -177,8 +196,8 @@ if( $("#catalog_detail").length > 0 ){
         $('#component_modal_results tbody tr').each(function() {
             const checkbox = $(this).find('input[type="checkbox"]');
             if (checkbox.is(':checked')) {
-                let resource_id = $(this).find('.resource_id').data('resource-id');
                 let row = $(this);
+                let resource_id = row.find('.resource_id').data('resource-id');
                 
                 if (resource_id) {
                     const deletePromise = $.ajax({
@@ -186,7 +205,7 @@ if( $("#catalog_detail").length > 0 ){
                         method: "DELETE",
                         contentType: "application/json",
                     }).then(function(result) {
-                        row.find('.contract-status').html('<span class="badge bg-danger">No</span>');
+                        row.find('.badge').replaceWith(`<span class="resource_id badge bg-danger" data-resource-id="${resource_id}">No</span>`);
                         checkbox.prop('checked', false);
                     });
                     
@@ -203,50 +222,48 @@ if( $("#catalog_detail").length > 0 ){
     });
 
     $('.linktocontract').on('click', function() {
-    const addPromises = [];
-    let checked_count = $('.resource_info:checked').length;
-    if (checked_count === 0) {
-        alert('No linked resources selected.');
-        return;
-    }
-
-    if (!confirm(`Are you sure you want to link ${checked_count} resource${checked_count > 1 ? 's' : ''} to this contract?`)) {
-        return;
-    }
-
-
-    $('#component_modal_results tbody tr').each(function() {
-        const checkbox = $(this).find('input[type="checkbox"]');
-        if (checkbox.is(':checked')) {
-            let row = $(this);
-            let biblio_id = row.find('.resource_info').data('biblio_id');
-            let permission_id = row.find('.resource_info').data('permission_id');
-
-            const postData = {
-                biblionumber: biblio_id,
-                permission_id: permission_id,
-            };
-
-            const addPromise = $.ajax({
-                url: '/api/v1/contrib/contracts/resources/',
-                method: "POST",
-                contentType: "application/json",
-                data: JSON.stringify(postData)
-            }).then(function(result) {
-                row.find('.contract-status').html('<span class="badge bg-success" data-resource-id="' + result.resource_id + '">Yes</span>');
-                checkbox.prop('checked', false);
-            });
-
-            addPromises.push(addPromise);
+        const addPromises = [];
+        let checked_count = $('.resource_info:checked').length;
+        if (checked_count === 0) {
+            alert('No linked resources selected.');
+            return;
         }
-    });
 
-    Promise.all(addPromises).then(function() {
-        console.log('All linking completed');
-        //location.reload();
-    }).catch(function(error) {
-        console.error('Some linking failed:', error);
-        //location.reload();
+        if (!confirm(`Are you sure you want to link ${checked_count} resource${checked_count > 1 ? 's' : ''} to this contract?`)) {
+            return;
+        }
+
+        $('#component_modal_results tbody tr').each(function() {
+            const checkbox = $(this).find('input[type="checkbox"]');
+            if (checkbox.is(':checked')) {
+                let row = $(this);
+                let biblio_id = row.find('.resource_info').data('biblio_id');
+                let permission_id = row.find('.resource_info').data('permission_id');
+                let resource_id = row.find('.resource_info').data('resource_id');
+
+                const postData = {
+                    biblionumber: biblio_id,
+                    permission_id: permission_id,
+                };
+
+                const addPromise = $.ajax({
+                    url: '/api/v1/contrib/contracts/resources/',
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(postData)
+                }).then(function(result) {
+                    row.find('.badge').replaceWith(`<span class="resource_id badge bg-success" data-resource-id="${resource_id}">Yes</span>`);
+                    checkbox.prop('checked', false);
+                });
+
+                addPromises.push(addPromise);
+            }
+        });
+
+        Promise.all(addPromises).then(function() {
+            console.log('All linking completed');
+        }).catch(function(error) {
+            console.error('Some linking failed:', error);
+        });
     });
-});
 }

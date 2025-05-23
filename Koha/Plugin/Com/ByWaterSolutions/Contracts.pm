@@ -255,6 +255,10 @@ sub intranet_head {
                         <button type="button" class="closebtn" data-bs-dismiss="modal" aria-label="Close">x</button>
                     </div>
                     <div class="modal-body">
+                    <div>
+                        <a href="#" class="btn btn-link" id="select_all"><i class="fa fa-check"></i> Select all</a>
+                        <a href="#" class="btn btn-link" id="clear_all"><i class="fa fa-check"></i> Clear all</a>
+                    </div>
                     <table id="component_modal_results" class="table">
                         <thead>
                             <tr>
