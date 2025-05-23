@@ -135,7 +135,7 @@ if( $("#catalog_detail").length > 0 ){
                             <td class="contract-status-${part.related_id}"></td>
                         </tr>
                     `);
-                    checkComponentContract(part.related_id, contract_id).then(isLinked => {
+                    checkComponentContract(part.related_id, contract_id, permission_id).then(isLinked => {
                         const statusCell = $(`.contract-status-${part.related_id}`);
                         if (isLinked) {
                             statusCell.html(`<span class="resource_id badge bg-success" data-resource-id="${isLinked.resource_id}">Yes</span>`);
@@ -148,33 +148,21 @@ if( $("#catalog_detail").length > 0 ){
         });
     });
 
-    async function checkComponentContract(biblionumber, currentContractId) {
+    async function checkComponentContract(biblionumber, currentContractId, currentPermissionId) {
         try {
             // First, get all permissions for this contract
-            const permissionsQuery = encodeURIComponent(`{"contract_id":"${currentContractId}"}`);
-            const permissionsResponse = await fetch(`/api/v1/contrib/contracts/permissions?q=${permissionsQuery}`);
+            const resourcesQuery = encodeURIComponent(`{"permission_id":"${currentPermissionId}"}`);
+            const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${resourcesQuery}`);
             
-            if (!permissionsResponse.ok) {
-                return null;
+        if (resourcesResponse.ok) {
+            const resources = await resourcesResponse.json();
+            const foundResource = resources.find(resource => resource.biblionumber == biblionumber);
+            if (foundResource) {
+                return foundResource; // Return the full resource object
             }
+        }
             
-            const permissions = await permissionsResponse.json();
-            
-            // For each permission, check if any of its resources match our biblionumber
-            for (let permission of permissions) {
-                const resourcesQuery = encodeURIComponent(`{"permission_id":"${permission.permission_id}"}`);
-                const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${resourcesQuery}`);
-                
-                if (resourcesResponse.ok) {
-                    const resources = await resourcesResponse.json();
-                    const foundResource = resources.find(resource => resource.biblionumber == biblionumber);
-                    if (foundResource) {
-                        return foundResource; // Return the full resource object, not just true
-                    }
-                }
-            }
-            
-            return null; // Return null instead of false
+            return null;
         } catch (error) {
             console.error(`Error checking contract for biblio ${biblionumber}:`, error);
             return null;
