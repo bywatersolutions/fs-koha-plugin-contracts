@@ -43,7 +43,7 @@ if( $("#catalog_detail").length > 0 ){
             result +=    '</li>';
             result +=    '</ul>';
             result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';
-            result +=    '<a class="btn btn-default btn-xs manage_resource" data-bs-toggle="modal" data-bs-target="#components_modal" data-contract_id="' + resource.permission.contract_id + '" data-biblio_id="' + resource.biblionumber + '">Manage contracts for issues/analytics</a>';
+            result +=    '<a class="btn btn-default btn-xs manage_resource" data-bs-toggle="modal" data-bs-target="#components_modal" data-contract_id="' + resource.permission.contract_id + '" data-biblio_id="' + resource.biblionumber + '" data-resource_id="' + resource.resource_id + '" data-permission_id="'+resource.permission.permission_id +'">Manage contracts for issues/analytics</a>';
             result +=    '</fieldset></td></tr>';
             $("#contracts_table").append(result);
         });
@@ -96,6 +96,10 @@ if( $("#catalog_detail").length > 0 ){
         var button = $(e.relatedTarget);
         var biblio_id = button.data('biblio_id');
         var contract_id = button.data('contract_id');
+        var resource_id = button.data('resource_id');
+        var permission_id = button.data('permission_id');
+        console.log(biblio_id);
+        console.log(contract_id);
         var url = '/api/v1/contrib/contracts/biblios/'+ biblio_id  +'/components';
         $.ajax({
             type: "GET",
@@ -107,7 +111,7 @@ if( $("#catalog_detail").length > 0 ){
                 response.forEach( function(part) {
                     $('#components_modal .modal-body table tbody').append(`
                         <tr>
-                            <td><input type="checkbox" value="${contract_id}" /></td>
+                            <td><input type="checkbox" value="${resource_id}" name="resource_id" /></td>
                             <td>${part.related_id}</td>
                             <td>${part.related_title}</td>
                             <td>${part.relationship_type}</td>
@@ -118,9 +122,10 @@ if( $("#catalog_detail").length > 0 ){
                     checkComponentContract(part.related_id, contract_id).then(isLinked => {
                         const statusCell = $(`.contract-status-${part.related_id}`);
                         if (isLinked) {
-                            statusCell.html(`<span class="badge bg-success">Yes</span>`);
+                            console.log(isLinked);
+                            statusCell.html(`<span class="resource_id badge bg-success" data-resource-id="${isLinked.resource_id}">Yes</span>`);
                         } else {
-                            statusCell.html(`<span class="badge bg-danger">No</span>`);
+                            statusCell.html(`<span class="resource_id badge bg-danger">No</span>`);
                         }
                     });
                 });
@@ -130,15 +135,17 @@ if( $("#catalog_detail").length > 0 ){
 
     async function checkComponentContract(biblionumber, currentContractId) {
         try {
+            // First, get all permissions for this contract
             const permissionsQuery = encodeURIComponent(`{"contract_id":"${currentContractId}"}`);
             const permissionsResponse = await fetch(`/api/v1/contrib/contracts/permissions?q=${permissionsQuery}`);
             
             if (!permissionsResponse.ok) {
-                return false;
+                return null;
             }
             
             const permissions = await permissionsResponse.json();
             
+            // For each permission, check if any of its resources match our biblionumber
             for (let permission of permissions) {
                 const resourcesQuery = encodeURIComponent(`{"permission_id":"${permission.permission_id}"}`);
                 const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${resourcesQuery}`);
@@ -147,17 +154,89 @@ if( $("#catalog_detail").length > 0 ){
                     const resources = await resourcesResponse.json();
                     const foundResource = resources.find(resource => resource.biblionumber == biblionumber);
                     if (foundResource) {
-                        return true;
+                        return foundResource; // Return the full resource object, not just true
                     }
                 }
             }
             
-            return false;
+            return null; // Return null instead of false
         } catch (error) {
             console.error(`Error checking contract for biblio ${biblionumber}:`, error);
-            return false;
+            return null;
         }
     }
 
+    $('.unlinkfromcontract').on('click', function() {
+        const deletePromises = [];
+        
+        $('#component_modal_results tbody tr').each(function() {
+            const checkbox = $(this).find('input[type="checkbox"]');
+            if (checkbox.is(':checked')) {
+                let resource_id = $(this).find('.resource_id').data('resource-id');
+                let row = $(this);
+                
+                if (resource_id) {
+                    const deletePromise = $.ajax({
+                        url: '/api/v1/contrib/contracts/resources/' + resource_id,
+                        method: "DELETE",
+                        contentType: "application/json",
+                    }).then(function(result) {
+                        row.find('.contract-status').html('<span class="badge bg-danger">No</span>');
+                        checkbox.prop('checked', false);
+                    });
+                    
+                    deletePromises.push(deletePromise);
+                }
+            }
+        });
+        
+        // Wait for all deletions to complete
+        Promise.all(deletePromises).then(function() {
+            console.log('All unlinking completed');
+            // Do something when all are done
+        }).catch(function(error) {
+            console.error('Some unlinking failed:', error);
+        });
+    });
 
+    $('.linktocontract').on('click', function() {
+    const addPromises = [];
+
+    // Get the contract_id and permission_id from the modal context
+    var button = $(this);
+    var contract_id = button.data('contract_id'); // or however you're getting this
+    var permission_id = button.data('permission_id'); // or however you're getting this
+
+    $('#component_modal_results tbody tr').each(function() {
+        const checkbox = $(this).find('input[type="checkbox"]');
+        if (checkbox.is(':checked')) {
+            let row = $(this);
+
+            const postData = {
+                biblionumber: 12,
+            };
+
+            const addPromise = $.ajax({
+                url: '/api/v1/contrib/contracts/resources/',
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(postData)
+            }).then(function(result) {
+                row.find('.contract-status').html('<span class="badge bg-success" data-resource-id="' + result.resource_id + '">Yes</span>');
+                checkbox.prop('checked', false);
+            });
+
+            addPromises.push(addPromise);
+        }
+    });
+
+    // Wait for all additions to complete
+    Promise.all(addPromises).then(function() {
+        console.log('All linking completed');
+        //location.reload();
+    }).catch(function(error) {
+        console.error('Some linking failed:', error);
+        //location.reload();
+    });
+});
 }

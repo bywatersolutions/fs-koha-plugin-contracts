@@ -270,6 +270,8 @@ sub intranet_head {
                     </table>
                     </div>
                     <div class="modal-footer">
+                        <button class="linktocontract" type="button" class="btn btn-primary">Link to contract</button>
+                        <button class="unlinkfromcontract" type="button" class="btn btn-primary">Unlink from contract</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
