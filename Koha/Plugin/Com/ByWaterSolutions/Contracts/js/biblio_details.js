@@ -98,8 +98,6 @@ if( $("#catalog_detail").length > 0 ){
         var contract_id = button.data('contract_id');
         var resource_id = button.data('resource_id');
         var permission_id = button.data('permission_id');
-        console.log(biblio_id);
-        console.log(contract_id);
         var url = '/api/v1/contrib/contracts/biblios/'+ biblio_id  +'/components';
         $.ajax({
             type: "GET",
@@ -111,18 +109,16 @@ if( $("#catalog_detail").length > 0 ){
                 response.forEach( function(part) {
                     $('#components_modal .modal-body table tbody').append(`
                         <tr>
-                            <td><input type="checkbox" value="${resource_id}" name="resource_id" /></td>
+                            <td><input class="resource_info" type="checkbox" data-resource_id="${resource_id}" data-biblio_id="${part.related_id}" data-permission_id="${permission_id}" /></td>
                             <td>${part.related_id}</td>
                             <td>${part.related_title}</td>
                             <td>${part.relationship_type}</td>
                             <td class="contract-status-${part.related_id}"></td>
                         </tr>
                     `);
-                    // Check if this component has a contract
                     checkComponentContract(part.related_id, contract_id).then(isLinked => {
                         const statusCell = $(`.contract-status-${part.related_id}`);
                         if (isLinked) {
-                            console.log(isLinked);
                             statusCell.html(`<span class="resource_id badge bg-success" data-resource-id="${isLinked.resource_id}">Yes</span>`);
                         } else {
                             statusCell.html(`<span class="resource_id badge bg-danger">No</span>`);
@@ -168,6 +164,15 @@ if( $("#catalog_detail").length > 0 ){
 
     $('.unlinkfromcontract').on('click', function() {
         const deletePromises = [];
+        let checked_count = $('.resource_info:checked').length;
+        if (checked_count === 0) {
+            alert('No resources selected.');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to unlink ${checked_count} resource${checked_count > 1 ? 's' : ''} from this contract?`)) {
+            return;
+        }
         
         $('#component_modal_results tbody tr').each(function() {
             const checkbox = $(this).find('input[type="checkbox"]');
@@ -190,10 +195,8 @@ if( $("#catalog_detail").length > 0 ){
             }
         });
         
-        // Wait for all deletions to complete
         Promise.all(deletePromises).then(function() {
             console.log('All unlinking completed');
-            // Do something when all are done
         }).catch(function(error) {
             console.error('Some unlinking failed:', error);
         });
@@ -201,19 +204,27 @@ if( $("#catalog_detail").length > 0 ){
 
     $('.linktocontract').on('click', function() {
     const addPromises = [];
+    let checked_count = $('.resource_info:checked').length;
+    if (checked_count === 0) {
+        alert('No linked resources selected.');
+        return;
+    }
 
-    // Get the contract_id and permission_id from the modal context
-    var button = $(this);
-    var contract_id = button.data('contract_id'); // or however you're getting this
-    var permission_id = button.data('permission_id'); // or however you're getting this
+    if (!confirm(`Are you sure you want to link ${checked_count} resource${checked_count > 1 ? 's' : ''} to this contract?`)) {
+        return;
+    }
+
 
     $('#component_modal_results tbody tr').each(function() {
         const checkbox = $(this).find('input[type="checkbox"]');
         if (checkbox.is(':checked')) {
             let row = $(this);
+            let biblio_id = row.find('.resource_info').data('biblio_id');
+            let permission_id = row.find('.resource_info').data('permission_id');
 
             const postData = {
-                biblionumber: 12,
+                biblionumber: biblio_id,
+                permission_id: permission_id,
             };
 
             const addPromise = $.ajax({
@@ -230,7 +241,6 @@ if( $("#catalog_detail").length > 0 ){
         }
     });
 
-    // Wait for all additions to complete
     Promise.all(addPromises).then(function() {
         console.log('All linking completed');
         //location.reload();
