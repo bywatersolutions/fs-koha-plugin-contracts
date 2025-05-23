@@ -43,14 +43,34 @@ if( $("#catalog_detail").length > 0 ){
             result +=    '</li>';
             result +=    '</ul>';
             result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';
+            result +=    '<a class="btn btn-default btn-xs manage_resource" data-bs-toggle="modal" data-bs-target="#components_modal" data-contract_id="' + resource.permission.contract_id + '" data-biblio_id="' + resource.biblionumber + '" data-resource_id="' + resource.resource_id + '" data-permission_id="'+resource.permission.permission_id +'">Manage contracts for issues/analytics</a>';
             result +=    '</fieldset></td></tr>';
             $("#contracts_table").append(result);
         });
     }
+
     $("body").on('click', '.delete_resource',function() {
             if( window.confirm('Do you want to delete this resource?') ){
                 delete_resource( this );
             }
+    });
+    
+    $('#select_all').on('click' , function(e) {
+        e.preventDefault();
+        $("input.resource_info").each(function() {
+            if ($(this).prop("checked") == false) {
+              $(this).prop("checked", true).change();
+            }
+        });
+    });
+
+    $('#clear_all').on('click' , function(e) {
+        e.preventDefault();
+        $("input.resource_info").each(function() {
+            if ($(this).prop("checked") == true) {
+              $(this).prop("checked", false).change();
+            }
+        });
     });
 
     function delete_resource( the_button ){
@@ -91,4 +111,159 @@ if( $("#catalog_detail").length > 0 ){
              console.log( _("There was an error fetching the resources") + err.responseText );
         });
 
+    $('#components_modal').on('shown.bs.modal', function (e) {
+        var button = $(e.relatedTarget);
+        var biblio_id = button.data('biblio_id');
+        var contract_id = button.data('contract_id');
+        var resource_id = button.data('resource_id');
+        var permission_id = button.data('permission_id');
+        var url = '/api/v1/contrib/contracts/biblios/'+ biblio_id  +'/components';
+        $.ajax({
+            type: "GET",
+            url: url,
+            contentType: "application/json",
+            complete: function(data) {
+                $('#components_modal .modal-body table tbody').empty();
+                let response = data.responseJSON;
+                response.forEach( function(part) {
+                    $('#components_modal .modal-body table tbody').append(`
+                        <tr>
+                            <td><input class="resource_info" type="checkbox" data-resource_id="${resource_id}" data-biblio_id="${part.related_id}" data-permission_id="${permission_id}" /></td>
+                            <td>${part.related_id}</td>
+                            <td>${part.related_title}</td>
+                            <td>${part.relationship_type}</td>
+                            <td class="contract-status-${part.related_id}"></td>
+                        </tr>
+                    `);
+                    checkComponentContract(part.related_id, contract_id).then(isLinked => {
+                        const statusCell = $(`.contract-status-${part.related_id}`);
+                        if (isLinked) {
+                            statusCell.html(`<span class="resource_id badge bg-success" data-resource-id="${isLinked.resource_id}">Yes</span>`);
+                        } else {
+                            statusCell.html(`<span class="resource_id badge bg-danger">No</span>`);
+                        }
+                    });
+                });
+            }
+        });
+    });
+
+    async function checkComponentContract(biblionumber, currentContractId) {
+        try {
+            // First, get all permissions for this contract
+            const permissionsQuery = encodeURIComponent(`{"contract_id":"${currentContractId}"}`);
+            const permissionsResponse = await fetch(`/api/v1/contrib/contracts/permissions?q=${permissionsQuery}`);
+            
+            if (!permissionsResponse.ok) {
+                return null;
+            }
+            
+            const permissions = await permissionsResponse.json();
+            
+            // For each permission, check if any of its resources match our biblionumber
+            for (let permission of permissions) {
+                const resourcesQuery = encodeURIComponent(`{"permission_id":"${permission.permission_id}"}`);
+                const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${resourcesQuery}`);
+                
+                if (resourcesResponse.ok) {
+                    const resources = await resourcesResponse.json();
+                    const foundResource = resources.find(resource => resource.biblionumber == biblionumber);
+                    if (foundResource) {
+                        return foundResource; // Return the full resource object, not just true
+                    }
+                }
+            }
+            
+            return null; // Return null instead of false
+        } catch (error) {
+            console.error(`Error checking contract for biblio ${biblionumber}:`, error);
+            return null;
+        }
+    }
+
+    $('.unlinkfromcontract').on('click', function() {
+        const deletePromises = [];
+        let checked_count = $('.resource_info:checked').length;
+        if (checked_count === 0) {
+            alert('No resources selected.');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to unlink ${checked_count} resource${checked_count > 1 ? 's' : ''} from this contract?`)) {
+            return;
+        }
+        
+        $('#component_modal_results tbody tr').each(function() {
+            const checkbox = $(this).find('input[type="checkbox"]');
+            if (checkbox.is(':checked')) {
+                let row = $(this);
+                let resource_id = row.find('.resource_id').data('resource-id');
+                
+                if (resource_id) {
+                    const deletePromise = $.ajax({
+                        url: '/api/v1/contrib/contracts/resources/' + resource_id,
+                        method: "DELETE",
+                        contentType: "application/json",
+                    }).then(function(result) {
+                        row.find('.badge').replaceWith(`<span class="resource_id badge bg-danger" data-resource-id="${resource_id}">No</span>`);
+                        checkbox.prop('checked', false);
+                    });
+                    
+                    deletePromises.push(deletePromise);
+                }
+            }
+        });
+        
+        Promise.all(deletePromises).then(function() {
+            console.log('All unlinking completed');
+        }).catch(function(error) {
+            console.error('Some unlinking failed:', error);
+        });
+    });
+
+    $('.linktocontract').on('click', function() {
+        const addPromises = [];
+        let checked_count = $('.resource_info:checked').length;
+        if (checked_count === 0) {
+            alert('No linked resources selected.');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to link ${checked_count} resource${checked_count > 1 ? 's' : ''} to this contract?`)) {
+            return;
+        }
+
+        $('#component_modal_results tbody tr').each(function() {
+            const checkbox = $(this).find('input[type="checkbox"]');
+            if (checkbox.is(':checked')) {
+                let row = $(this);
+                let biblio_id = row.find('.resource_info').data('biblio_id');
+                let permission_id = row.find('.resource_info').data('permission_id');
+                let resource_id = row.find('.resource_info').data('resource_id');
+
+                const postData = {
+                    biblionumber: biblio_id,
+                    permission_id: permission_id,
+                };
+
+                const addPromise = $.ajax({
+                    url: '/api/v1/contrib/contracts/resources/',
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(postData)
+                }).then(function(result) {
+                    row.find('.badge').replaceWith(`<span class="resource_id badge bg-success" data-resource-id="${resource_id}">Yes</span>`);
+                    checkbox.prop('checked', false);
+                });
+
+                addPromises.push(addPromise);
+            }
+        });
+
+        Promise.all(addPromises).then(function() {
+            console.log('All linking completed');
+        }).catch(function(error) {
+            console.error('Some linking failed:', error);
+        });
+    });
 }

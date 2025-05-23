@@ -51,4 +51,70 @@ sub list_biblios {
     };
 }
 
+sub get_components_for_biblio {
+    my $c = shift->openapi->valid_input or return;
+
+    my $biblionumber = $c->validation->param('biblionumber');
+    return $c->render( status => 404, openapi => { error => "Biblionumber not found" } )
+        unless $biblionumber;
+
+    my $biblio = Koha::Biblios->find($biblionumber);
+    return $c->render( status => 404, openapi => { error => "Biblio not found" } )
+        unless $biblio;
+
+    my @components = ();
+    
+    # Get child components using get_marc_components
+    my $max_results = C4::Context->preference('MaxComponentRecords') || 10;
+    my $child_components = $biblio->get_marc_components($max_results);
+    
+    # Process child relationships
+    if ($child_components && @{$child_components}) {
+        for my $component (@{$child_components}) {
+            # Convert the raw record to a MARC record
+            my $record = C4::Search::new_record_from_zebra('biblioserver', $component);
+            
+            # Extract the biblionumber
+            my $child_id = Koha::SearchEngine::Search::extract_biblionumber($record);
+            
+            # Get the full biblio record
+            my $child_biblio = Koha::Biblios->find($child_id);
+            my $child_title = '';
+            
+            if ($child_biblio) {
+                $child_title = $child_biblio->title || '';
+                
+                # Try alternative methods if no title
+                if (!$child_title) {
+                    my $biblio_data = C4::Biblio::GetBiblioData($child_id);
+                    $child_title = $biblio_data->{title} if $biblio_data;
+                }
+            }
+            
+            push @components, {
+                relationship_type => 'child',
+                related_title => $child_title || '',
+                related_id => $child_id || '',
+            };
+        }
+    }
+    
+    # Get host relationships by examining the 773 fields
+    my $marc_record = $biblio->metadata->record;
+    if ($marc_record) {
+        foreach my $field ($marc_record->field('773')) {
+            my $host_id = $field->subfield('w') || '';
+            my $host_title = $field->subfield('t') || '';
+            
+            push @components, {
+                relationship_type => 'host',
+                related_title => $host_title || '',
+                related_id => $host_id || '',
+            };
+        }
+    }
+
+    return $c->render( status => 200, openapi => \@components );
+}
+
 1;
