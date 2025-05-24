@@ -212,8 +212,7 @@ if( $("#catalog_detail").length > 0 ){
             if (checkbox.is(':checked') && !unlinked ) {
                 $('<p class="loader"><i class="fa fa-spinner fa-spin" style="font-size:24px;color:gray;"></i></p>').insertAfter( row.find('.badge') )
                 row.find('.badge').hide();
-                let resource_id = row.find('.resource_id').data('resource-id');
-                
+                let resource_id = row.find('.resource_id').data('resource-id'); 
                 if (resource_id) {
                     const deletePromise = $.ajax({
                         url: '/api/v1/contrib/contracts/resources/' + resource_id,
@@ -221,7 +220,7 @@ if( $("#catalog_detail").length > 0 ){
                         contentType: "application/json",
                     }).then(function(result) {
                         row.find('.loader').hide();
-                        row.find('.badge').replaceWith(`<span class="resource_id unlinked badge bg-danger" data-resource-id="${resource_id}">No</span>`);
+                        row.find('.badge').replaceWith(`<span class="resource_id unlinked badge bg-danger" data-resource-id="">No</span>`);
                         row.find('.badge').show();
                         checkbox.prop('checked', false);
                     });
@@ -278,7 +277,7 @@ if( $("#catalog_detail").length > 0 ){
                     data: JSON.stringify(postData)
                 }).then(function(result) {
                     row.find('.loader').hide();
-                    row.find('.badge').replaceWith(`<span class="resource_id linked badge bg-success" data-resource-id="${resource_id}">Yes</span>`);
+                    row.find('.badge').replaceWith(`<span class="resource_id linked badge bg-success" data-resource-id="${result.resource_id}">Yes</span>`);
                     row.find('.badge').show();
                     checkbox.prop('checked', false);
                     
