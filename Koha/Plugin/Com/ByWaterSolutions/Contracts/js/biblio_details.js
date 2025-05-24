@@ -64,6 +64,26 @@ if( $("#catalog_detail").length > 0 ){
         });
     });
 
+    $('#select_all_linked').on('click' , function(e) {
+        e.preventDefault();
+        $("input.resource_info").each(function() {
+            let linked = $(this).closest('tr').find('.linked').length;
+            if ($(this).prop("checked") == false && linked ) {
+              $(this).prop("checked", true).change();
+            }
+        });
+    });
+
+    $('#select_all_unlinked').on('click' , function(e) {
+        e.preventDefault();
+        $("input.resource_info").each(function() {
+            let unlinked = $(this).closest('tr').find('.unlinked').length;
+            if ($(this).prop("checked") == false && unlinked ) {
+              $(this).prop("checked", true).change();
+            }
+        });
+    });
+
     $('#clear_all').on('click' , function(e) {
         e.preventDefault();
         $("input.resource_info").each(function() {
@@ -138,9 +158,9 @@ if( $("#catalog_detail").length > 0 ){
                     checkComponentContract(part.related_id, contract_id, permission_id).then(isLinked => {
                         const statusCell = $(`.contract-status-${part.related_id}`);
                         if (isLinked) {
-                            statusCell.html(`<span class="resource_id badge bg-success" data-resource-id="${isLinked.resource_id}">Yes</span>`);
+                            statusCell.html(`<span class="resource_id linked badge bg-success" data-resource-id="${isLinked.resource_id}">Yes</span>`);
                         } else {
-                            statusCell.html(`<span class="resource_id badge bg-danger">No</span>`);
+                            statusCell.html(`<span class="resource_id unlinked badge bg-danger">No</span>`);
                         }
                     });
                 });
@@ -170,6 +190,7 @@ if( $("#catalog_detail").length > 0 ){
     }
 
     $('.unlinkfromcontract').on('click', function() {
+        $('.problem').empty();
         const deletePromises = [];
         let checked_count = $('.resource_info:checked').length;
         if (checked_count === 0) {
@@ -182,9 +203,13 @@ if( $("#catalog_detail").length > 0 ){
         }
         
         $('#component_modal_results tbody tr').each(function() {
+            let row = $(this);
             const checkbox = $(this).find('input[type="checkbox"]');
-            if (checkbox.is(':checked')) {
-                let row = $(this);
+            let unlinked = row.find('.unlinked').length;
+            if ( checkbox.is(':checked') && unlinked ) {
+                $('<div class="hint problem">Already unlinked</span>').insertAfter( row.find('.badge') );
+            }
+            if (checkbox.is(':checked') && !unlinked ) {
                 let resource_id = row.find('.resource_id').data('resource-id');
                 
                 if (resource_id) {
@@ -193,7 +218,7 @@ if( $("#catalog_detail").length > 0 ){
                         method: "DELETE",
                         contentType: "application/json",
                     }).then(function(result) {
-                        row.find('.badge').replaceWith(`<span class="resource_id badge bg-danger" data-resource-id="${resource_id}">No</span>`);
+                        row.find('.badge').replaceWith(`<span class="resource_id unlinked badge bg-danger" data-resource-id="${resource_id}">No</span>`);
                         checkbox.prop('checked', false);
                     });
                     
@@ -210,6 +235,7 @@ if( $("#catalog_detail").length > 0 ){
     });
 
     $('.linktocontract').on('click', function() {
+        $('.problem').empty();
         const addPromises = [];
         let checked_count = $('.resource_info:checked').length;
         if (checked_count === 0) {
@@ -222,9 +248,14 @@ if( $("#catalog_detail").length > 0 ){
         }
 
         $('#component_modal_results tbody tr').each(function() {
-            const checkbox = $(this).find('input[type="checkbox"]');
-            if (checkbox.is(':checked')) {
-                let row = $(this);
+            let row = $(this);
+            const checkbox = row.find('input[type="checkbox"]');
+            let linked = row.find('.linked').length;
+            if ( checkbox.is(':checked') && linked ) {
+                $('<div class="hint problem">Already linked</span>').insertAfter( row.find('.badge') );
+            }
+
+            if (checkbox.is(':checked') && !linked ) {
                 let biblio_id = row.find('.resource_info').data('biblio_id');
                 let permission_id = row.find('.resource_info').data('permission_id');
                 let resource_id = row.find('.resource_info').data('resource_id');
@@ -240,7 +271,7 @@ if( $("#catalog_detail").length > 0 ){
                     contentType: "application/json",
                     data: JSON.stringify(postData)
                 }).then(function(result) {
-                    row.find('.badge').replaceWith(`<span class="resource_id badge bg-success" data-resource-id="${resource_id}">Yes</span>`);
+                    row.find('.badge').replaceWith(`<span class="resource_id linked badge bg-success" data-resource-id="${resource_id}">Yes</span>`);
                     checkbox.prop('checked', false);
                 });
 
