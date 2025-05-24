@@ -152,7 +152,7 @@ if( $("#catalog_detail").length > 0 ){
                             <td>${part.related_id}</td>
                             <td>${part.related_title}</td>
                             <td>${part.relationship_type}</td>
-                            <td class="contract-status-${part.related_id}"></td>
+                            <td class="contract-status-${part.related_id}"><p class="loader"><i class="fa fa-spinner fa-spin" style="font-size:24px;color:gray;"></i></p></td>
                         </tr>
                     `);
                     checkComponentContract(part.related_id, contract_id, permission_id).then(isLinked => {
@@ -210,6 +210,8 @@ if( $("#catalog_detail").length > 0 ){
                 $('<div class="hint problem">Already unlinked</span>').insertAfter( row.find('.badge') );
             }
             if (checkbox.is(':checked') && !unlinked ) {
+                $('<p class="loader"><i class="fa fa-spinner fa-spin" style="font-size:24px;color:gray;"></i></p>').insertAfter( row.find('.badge') )
+                row.find('.badge').hide();
                 let resource_id = row.find('.resource_id').data('resource-id');
                 
                 if (resource_id) {
@@ -218,7 +220,9 @@ if( $("#catalog_detail").length > 0 ){
                         method: "DELETE",
                         contentType: "application/json",
                     }).then(function(result) {
+                        row.find('.loader').hide();
                         row.find('.badge').replaceWith(`<span class="resource_id unlinked badge bg-danger" data-resource-id="${resource_id}">No</span>`);
+                        row.find('.badge').show();
                         checkbox.prop('checked', false);
                     });
                     
@@ -256,6 +260,8 @@ if( $("#catalog_detail").length > 0 ){
             }
 
             if (checkbox.is(':checked') && !linked ) {
+                $('<p class="loader"><i class="fa fa-spinner fa-spin" style="font-size:24px;color:gray;"></i></p>').insertAfter( row.find('.badge') )
+                row.find('.badge').hide();
                 let biblio_id = row.find('.resource_info').data('biblio_id');
                 let permission_id = row.find('.resource_info').data('permission_id');
                 let resource_id = row.find('.resource_info').data('resource_id');
@@ -271,8 +277,11 @@ if( $("#catalog_detail").length > 0 ){
                     contentType: "application/json",
                     data: JSON.stringify(postData)
                 }).then(function(result) {
+                    row.find('.loader').hide();
                     row.find('.badge').replaceWith(`<span class="resource_id linked badge bg-success" data-resource-id="${resource_id}">Yes</span>`);
+                    row.find('.badge').show();
                     checkbox.prop('checked', false);
+                    
                 });
 
                 addPromises.push(addPromise);
