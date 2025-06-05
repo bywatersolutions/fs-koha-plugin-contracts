@@ -157,8 +157,8 @@ if( $("#catalog_detail").length > 0 ){
                     `);
                     checkComponentContract(part.related_id, contract_id, permission_id).then(isLinked => {
                         const statusCell = $(`.contract-status-${part.related_id}`);
-                        if (isLinked) {
-                            statusCell.html(`<span class="resource_id linked badge bg-success" data-resource-id="${isLinked.resource_id}">Yes</span>`);
+                        if (isLinked && isLinked.length > 0 ) {
+                            statusCell.html(`<span class="resource_id linked badge bg-success" data-resource-id="${isLinked[0].resource_id}">Yes</span>`);
                         } else {
                             statusCell.html(`<span class="resource_id unlinked badge bg-danger">No</span>`);
                         }
@@ -176,14 +176,14 @@ if( $("#catalog_detail").length > 0 ){
 
             while (hasMore) {
                 const permissionQuery = encodeURIComponent(`{"permission_id":"${currentPermissionId}"}`);
-                const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${permissionQuery}&_page=${page}&_per_page=1000`);
+                const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${permissionQuery}&_page=${page}&_per_page=10000`);
 
                 if (resourcesResponse.ok) {
                     const resources = await resourcesResponse.json();
                     allResources = allResources.concat(resources);
 
                     // Check if we got fewer results than the page size (last page)
-                    if (resources.length < 1000) {
+                    if (resources.length < 10000) {
                         hasMore = false;
                     } else {
                         page++;
