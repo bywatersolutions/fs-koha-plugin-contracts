@@ -170,18 +170,34 @@ if( $("#catalog_detail").length > 0 ){
 
     async function checkComponentContract(biblionumber, currentContractId, currentPermissionId) {
         try {
-            // First, get all permissions for this contract
-            const resourcesQuery = encodeURIComponent(`{"permission_id":"${currentPermissionId}"}`);
-            const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${resourcesQuery}`);
-            
-        if (resourcesResponse.ok) {
-            const resources = await resourcesResponse.json();
-            const foundResource = resources.find(resource => resource.biblionumber == biblionumber);
-            if (foundResource) {
-                return foundResource; // Return the full resource object
+            let allResources = [];
+            let page = 1;
+            let hasMore = true;
+
+            while (hasMore) {
+                const permissionQuery = encodeURIComponent(`{"permission_id":"${currentPermissionId}"}`);
+                const resourcesResponse = await fetch(`/api/v1/contrib/contracts/resources?q=${permissionQuery}&_page=${page}&_per_page=1000`);
+
+                if (resourcesResponse.ok) {
+                    const resources = await resourcesResponse.json();
+                    allResources = allResources.concat(resources);
+
+                    // Check if we got fewer results than the page size (last page)
+                    if (resources.length < 1000) {
+                        hasMore = false;
+                    } else {
+                        page++;
+                    }
+                } else {
+                    hasMore = false;
+                }
             }
-        }
-            
+
+            const foundResources = allResources.filter(resource => resource.biblionumber == biblionumber);
+            if (foundResources.length > 0) {
+                return foundResources;
+            }
+
             return null;
         } catch (error) {
             console.error(`Error checking contract for biblio ${biblionumber}:`, error);
