@@ -78,6 +78,7 @@ sub add_contract {
     my $contract_number = $c->validation->param('body')->{'contract_number'};
     my $supplier_id = $c->validation->param('body')->{'supplier_id'};
     my $rvn = $c->validation->param('body')->{'rvn'};
+    my $users = $c->validation->param('body')->{'users'};
     my $patron = $c->stash('koha.user');
     unless( _check_auth( $patron ) ){
         return $c->render(
@@ -91,6 +92,7 @@ sub add_contract {
             contract_number => $contract_number,
             supplier_id => $supplier_id,
             rvn         => $rvn,
+            users       => $users,
             created_user => $patron->id,
             updated_user => $patron->id
         });
@@ -113,6 +115,7 @@ sub update_contract {
     my $contract_id = $c->validation->param('contract_id');
     my $contract_number= $c->validation->param('body')->{'contract_number'};
     my $rvn= $c->validation->param('body')->{'rvn'};
+    my $users= $c->validation->param('body')->{'users'};
     my $supplier_id = $c->validation->param('body')->{'supplier_id'};
     my $patron = $c->stash('koha.user');
 
@@ -129,6 +132,7 @@ sub update_contract {
         $contract->contract_number( $contract_number ) if $contract_number;
         $contract->supplier_id( $supplier_id ) if $supplier_id;
         $contract->rvn( $rvn ) if $rvn;
+        $contract->users( $users ) if $users;
         $contract->updated_user( $patron->id );
         $contract->store;
         $contract->discard_changes;

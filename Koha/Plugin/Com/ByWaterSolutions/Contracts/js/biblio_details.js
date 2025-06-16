@@ -40,6 +40,9 @@ if( $("#catalog_detail").length > 0 ){
             result +=      '<li>';
             result +=        'RVN: ' + resource.permission.contract.rvn;
             result +=      '</li>';
+            result +=      '<li>';
+            result +=        'Users: ' + resource.permission.contract.users;
+            result +=      '</li>';
             result +=    '</li>';
             result +=    '</ul>';
             result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';

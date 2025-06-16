@@ -36,7 +36,7 @@
                 <div id="contracts_list">
                     <h2>Contracts</h2>
                         [% IF (can_manage_contracts) %]
-                            <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="" data-rvn="">
+                            <a id="new_contract" class="btn btn-default btn-xs" data-contract_id="new" data-contract_number="" data-rvn="" data-users="">
                             <i class="fa fa-plus"></i> New contract
                             </a>
                         [% END %]
@@ -48,6 +48,7 @@
                                 <th>Permissions</th>
                                 <th>Resources</th>
                                 <th>RVN</th>
+                                <th>Users</th>
                                 <th>Info</th>
                                 [% IF (can_manage_contracts) %]<th>&nbsp;</th>[% END %]
                             </tr>
@@ -85,6 +86,11 @@
                             <li>
                                 <label  for="rvn">RVN:</label>
                                 <textarea id="rvn" name="rvn" rows="5" cols="40" class="contract_update"></textarea>
+                                </select>
+                            </li>
+                            <li>
+                                <label  for="users">Users:</label>
+                                <textarea id="users" name="users" rows="5" cols="40" class="contract_update"></textarea>
                                 </select>
                             </li>
                         </ul>
@@ -309,6 +315,11 @@
                         "orderable": true,
                     },
                     {
+                        "data": "users",
+                        "searchable": true,
+                        "orderable": true,
+                    },
+                    {
                         "data": "created_user:updated_user:created_on:updated_on",
                         "searchable": true,
                         "orderable": false,
@@ -331,6 +342,7 @@
                             contract_buttons += ' data-contract_id="'+ contract.contract_id;
                             contract_buttons += '" data-contract_number="'+ contract.contract_number;
                             contract_buttons += '" data-rvn="'+ contract.rvn;
+                            contract_buttons += '" data-users="'+ contract.users;
                             contract_buttons += '" ><i class="fa fa-pencil"></i> Edit contract</a>';
                             contract_buttons += '<a class="btn btn-default btn-xs delete_contract"';
                             contract_buttons += ' data-contract_id="'+ contract.contract_id;
@@ -492,6 +504,7 @@
                 let contract_id = $(element).data('contract_id');
                 let contract_number = $(element).data('contract_number');
                 let rvn = $(element).data('rvn');
+                let users = $(element).data('users');
 
                 if ( contract_id != "new" ){
                 let options = {
@@ -507,6 +520,7 @@
                         $("#contract_edit_number").val(result.contract_number);
                         $("#contract_edit_id").val(result.contract_id);
                         $("#rvn").val(result.rvn);
+                        $("#users").val(result.users);
                         if(result.copyright_holder){
                         $("#vendor_select").select2('destroy');
                             $("#vendor_select").html(''); 
@@ -525,6 +539,7 @@
                         $("#contract_edit_number").val("new");
                         $("#contract_edit_id").val("new");
                         $('#rvn').val("");
+                        $('#users').val("");
                         $("#edit_contract_modal").modal('show');
                 }
 
@@ -596,6 +611,7 @@
                 let contract_number = $(element).find('input[name="contract_edit_number"]').val();
                 let supplier_id     =     $(element).find('#vendor_select').val();
                 let rvn             =     $(element).find('#rvn').val();
+                let users           =     $(element).find('#users').val();
                 let options = {
                     url: url,
                     method: method,
@@ -604,6 +620,7 @@
                         contract_number: contract_number,
                         supplier_id: supplier_id?supplier_id:"",
                         rvn: rvn ? rvn : "",
+                        users: users ? users : "",
                     })
                 };
                 $.ajax(options)
@@ -747,7 +764,7 @@
         };
 
 
-        function save_contract(id,contract_number,rvn){
+        function save_contract(id,contract_number,rvn,users){
             console.log(rvn)
             let options = {
                 url: '/api/v1/contrib/contracts/contracts/' + id,
@@ -756,6 +773,7 @@
                 data: JSON.stringify({
                     contract_number: contract_number,
                     rvn: rvn,
+                    users: users,
                 })
             };
             $.ajax(options)

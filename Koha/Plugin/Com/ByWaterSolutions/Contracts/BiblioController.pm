@@ -120,7 +120,7 @@ sub get_components_for_biblio {
                 relationship_type => 'host',
                 related_title => $host_title || '',
                 related_id => $host_id || '',
-                related_subtitle => $host_sutitle || '',
+                related_subtitle => $host_subtitle || '',
             };
         }
 
