@@ -40,6 +40,9 @@ if( $("#catalog_detail").length > 0 ){
             result +=      '<li>';
             result +=        'RVN: ' + resource.permission.contract.rvn;
             result +=      '</li>';
+            result +=      '<li>';
+            result +=        'Users: ' + resource.permission.contract.users;
+            result +=      '</li>';
             result +=    '</li>';
             result +=    '</ul>';
             result +=    '<a class="btn btn-default btn-xs delete_resource" data-resource_id="' + resource.resource_id + '">Unlink contract</a>';
@@ -150,7 +153,7 @@ if( $("#catalog_detail").length > 0 ){
                         <tr>
                             <td><input class="resource_info" type="checkbox" data-resource_id="${resource_id}" data-biblio_id="${part.related_id}" data-permission_id="${permission_id}" /></td>
                             <td>${part.related_id}</td>
-                            <td>${part.related_title} ${part.related_part}</td>
+                            <td>${part.related_title} ${part.related_subtitle}</td>
                             <td>${part.relationship_type}</td>
                             <td class="contract-status-${part.related_id}"><p class="loader"><i class="fa fa-spinner fa-spin" style="font-size:24px;color:gray;"></i></p></td>
                         </tr>

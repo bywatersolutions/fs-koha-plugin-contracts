@@ -83,6 +83,7 @@ sub install {
                 updated_on timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
                 updated_user INT(11) NOT NULL,
                 rvn VARCHAR(255),
+                users VARCHAR(255),
                 PRIMARY KEY (`contract_id`),
                 CONSTRAINT `contracts_plugin_contracts_ibfk_1` FOREIGN KEY (`supplier_id`) REFERENCES `aqbooksellers` (`id`)
             ) ENGINE = INNODB;
@@ -197,6 +198,7 @@ sub upgrade {
 
     try {
         $dbh->do("ALTER TABLE $contracts_table ADD rvn VARCHAR(255) AFTER updated_user");
+        $dbh->do("ALTER TABLE $contracts_table ADD users VARCHAR(255) AFTER rvn");
     } catch {
         warn "ERROR DURING UPGRADE: $_";
     }
