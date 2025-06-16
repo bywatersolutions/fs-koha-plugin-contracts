@@ -80,11 +80,11 @@ sub get_components_for_biblio {
             # Get the full biblio record
             my $child_biblio = Koha::Biblios->find($child_id);
             my $child_title = '';
+            my $child_part = '';
             
             if ($child_biblio) {
                 $child_title = $child_biblio->title || '';
-                
-                # Try alternative methods if no title
+                $child_part = $child_biblio->part_name || '';
                 if (!$child_title) {
                     my $biblio_data = C4::Biblio::GetBiblioData($child_id);
                     $child_title = $biblio_data->{title} if $biblio_data;
@@ -95,23 +95,36 @@ sub get_components_for_biblio {
                 relationship_type => 'child',
                 related_title => $child_title || '',
                 related_id => $child_id || '',
+                related_part => $child_part || '',
             };
         }
     }
     
     # Get host relationships by examining the 773 fields
     my $marc_record = $biblio->metadata->record;
+    my $host_id;
     if ($marc_record) {
         foreach my $field ($marc_record->field('773')) {
-            my $host_id = $field->subfield('w') || '';
-            my $host_title = $field->subfield('t') || '';
-            
+            $host_id = $field->subfield('w') || '';
+
+            my $host_biblio = Koha::Biblios->find($host_id);
+            my $host_title = '';
+            my $host_part = '';
+
+            if ($host_biblio) {
+                $host_title = $host_biblio->title || '';
+                $host_part = $host_biblio->part_name || '';
+            }
+
             push @components, {
                 relationship_type => 'host',
                 related_title => $host_title || '',
                 related_id => $host_id || '',
+                related_part => $host_part || '',
             };
         }
+
+
     }
 
     return $c->render( status => 200, openapi => \@components );
