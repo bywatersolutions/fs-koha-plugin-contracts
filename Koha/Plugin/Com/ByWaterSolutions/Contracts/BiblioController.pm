@@ -80,11 +80,11 @@ sub get_components_for_biblio {
             # Get the full biblio record
             my $child_biblio = Koha::Biblios->find($child_id);
             my $child_title = '';
-            my $child_part = '';
+            my $child_subtitle = '';
             
             if ($child_biblio) {
                 $child_title = $child_biblio->title || '';
-                $child_part = $child_biblio->part_name || '';
+                $child_subtitle = $child_biblio->subtitle || '';
                 if (!$child_title) {
                     my $biblio_data = C4::Biblio::GetBiblioData($child_id);
                     $child_title = $biblio_data->{title} if $biblio_data;
@@ -95,7 +95,7 @@ sub get_components_for_biblio {
                 relationship_type => 'child',
                 related_title => $child_title || '',
                 related_id => $child_id || '',
-                related_part => $child_part || '',
+                related_subtitle => $child_subtitle || '',
             };
         }
     }
@@ -109,18 +109,18 @@ sub get_components_for_biblio {
 
             my $host_biblio = Koha::Biblios->find($host_id);
             my $host_title = '';
-            my $host_part = '';
+            my $host_subtitle = '';
 
             if ($host_biblio) {
                 $host_title = $host_biblio->title || '';
-                $host_part = $host_biblio->part_name || '';
+                $host_subtitle = $host_biblio->subtitle || '';
             }
 
             push @components, {
                 relationship_type => 'host',
                 related_title => $host_title || '',
                 related_id => $host_id || '',
-                related_part => $host_part || '',
+                related_subtitle => $host_sutitle || '',
             };
         }
 
