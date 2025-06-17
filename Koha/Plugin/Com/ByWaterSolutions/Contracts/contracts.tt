@@ -619,8 +619,8 @@
                     data: JSON.stringify({
                         contract_number: contract_number,
                         supplier_id: supplier_id?supplier_id:"",
-                        rvn: rvn ? rvn : "",
-                        users: users ? users : "",
+                        rvn: rvn === "" ? " " : rvn,
+                        users: users === "" ? " " : users,
                     })
                 };
                 $.ajax(options)
