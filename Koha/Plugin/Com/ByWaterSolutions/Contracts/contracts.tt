@@ -135,6 +135,30 @@
             </div>
         </div>
     </div>
+    <div id="batch_assign_biblios_modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Batch assign resource ( Permission #<span class="perm_number"></span> )</h1>
+                <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+            </div>
+            <div id="batch_perm_number" class="modal-body">
+            <fieldset class="rows">
+                <ol>
+                    <li>
+                        <label for="bibliolist">Biblio list (one biblionumber per line): </label>
+                        <textarea rows="10" cols="30" id="bibliolist" name="bibliolist"></textarea>
+                    </li>
+                </ol>
+            </fieldset>
+
+            <button id="submit_batch_biblios" type="submit" class=""btn btn-default btn-primary btn-xs>Submit</button>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
+            </div>
+        </div>
+    </div>
 
 [% MACRO jsinclude BLOCK %]
     [% Asset.js("js/admin-menu.js") | $raw %]
@@ -267,7 +291,9 @@
                                        perms += '<a class="btn btn-default btn-xs link_resource" data-biblionumber="[% biblionumber %]" data-permission_id="'+e.permission_id+'">Link to bib ([% biblionumber | html %])</a>';
                                     }
                                 [% END %]
-                                perms += '</ul></br><hr>';
+                                perms += '</ul>';
+                                perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch assign resource</a></div>';
+                                perms += '<br/><hr/>';
                             });
                             return perms;
                         },
@@ -428,6 +454,20 @@
             $("body").on('click', '.show_extra_resources',function() {
                 $(this).closest('ul').children('.extra_resource').toggle();
             });
+            $("#batch_assign_biblios_modal").on('shown.bs.modal', function(e) {
+                let button = $(e.relatedTarget);
+                let permission_id = button.data('permission_id');
+                $(".perm_number").text(permission_id)
+
+                $('#submit_batch_biblios').data('permission_id', permission_id);
+
+                $("#bibliolist").val('').focus();
+                $("#batch_results").hide().empty();
+                $("#submit_batch_biblios").show();
+            });
+            $("#submit_batch_biblios").click(function() {
+                ContractFunctions.batch_assign_biblios();
+            });
                 
 
         });
@@ -499,7 +539,39 @@
                         humanMsg.displayAlert( _("There was an error linking the resource") + err.responseText, { className: 'humanError' } );
                     });
             },
+            batch_assign_biblios: function() {
+                let permission_id = $("#submit_batch_biblios").data('permission_id');
+                let bibliolist = $("#bibliolist").val();
+                let biblionumbers = bibliolist
+                    .split('\n')
+                    .map(num => num.trim())
+                    .filter(num => num !== '' && !isNaN(num));
 
+                //reporting arrays
+                let results = {
+                    success: [],
+                    errors: [],
+                    warnings: []
+                };
+                biblionumbers.forEach(function(biblionumber) {
+                    $.ajax({
+                        url: '/api/v1/contrib/contracts/resources/',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            permission_id: permission_id,
+                            biblionumber: biblionumber
+                        }),
+                    }).done(function(result){
+                        console.log(result);
+                        let results = $.ajax({
+                            url: '/api/v1/contrib/contracts/resources/' + biblionumber,
+                            method: 'GET',
+                        });
+                        console.log(results);
+                    });
+                });
+            },
             edit_contract:  function(element){
                 let contract_id = $(element).data('contract_id');
                 let contract_number = $(element).data('contract_number');
