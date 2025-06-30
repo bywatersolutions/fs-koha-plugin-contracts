@@ -139,20 +139,34 @@
         <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h1>Batch assign resource ( Permission #<span class="perm_number"></span> )</h1>
+                <h1>Batch assign resources ( Permission #<span class="perm_number"></span> )</h1>
                 <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
             </div>
             <div id="batch_perm_number" class="modal-body">
-            <fieldset class="rows">
-                <ol>
-                    <li>
-                        <label for="bibliolist">Biblio list (one biblionumber per line): </label>
-                        <textarea rows="10" cols="30" id="bibliolist" name="bibliolist"></textarea>
-                    </li>
-                </ol>
-            </fieldset>
-
-            <button id="submit_batch_biblios" type="submit" class=""btn btn-default btn-primary btn-xs>Submit</button>
+            <div id="biblist">
+                <fieldset class="rows">
+                    <ol>
+                        <li>
+                            <label for="bibliolist">Biblio list (one biblionumber per line): </label>
+                            <textarea rows="10" cols="30" id="bibliolist" name="bibliolist"></textarea>
+                        </li>
+                    </ol>
+                </fieldset>
+            </div>
+            <div id="batch_add_results" style="display:none;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Biblionumber</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <button id="submit_batch_biblios" type="submit" class="btn btn-default btn-primary btn-xs">Submit</button>
+            <button id="confirm_batch_biblios" style="display:none;" class="btn btn-default btn-primary btn-xs">Continue</button>
             </div>
             <div class="modal-footer">
                 <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
@@ -292,7 +306,7 @@
                                     }
                                 [% END %]
                                 perms += '</ul>';
-                                perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch assign resource</a></div>';
+                                perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch assign resources</a></div>';
                                 perms += '<br/><hr/>';
                             });
                             return perms;
@@ -468,7 +482,9 @@
             $("#submit_batch_biblios").click(function() {
                 ContractFunctions.batch_assign_biblios();
             });
-                
+            $("#confirm_batch_biblios").click(function() {
+                location.reload() 
+            });
 
         });
 
@@ -540,6 +556,8 @@
                     });
             },
             batch_assign_biblios: function() {
+                $('#submit_batch_biblios').hide();
+                $('#biblist').hide();
                 let permission_id = $("#submit_batch_biblios").data('permission_id');
                 let bibliolist = $("#bibliolist").val();
                 let biblionumbers = bibliolist
@@ -548,28 +566,75 @@
                     .filter(num => num !== '' && !isNaN(num));
 
                 //reporting arrays
-                let results = {
-                    success: [],
-                    errors: [],
-                    warnings: []
-                };
-                biblionumbers.forEach(function(biblionumber) {
+                let errors = [];
+                let success = [];
+
+                let processed = 0;
+                biblionumbers.forEach(function(biblionumber){
                     $.ajax({
-                        url: '/api/v1/contrib/contracts/resources/',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            permission_id: permission_id,
-                            biblionumber: biblionumber
-                        }),
-                    }).done(function(result){
-                        console.log(result);
-                        let results = $.ajax({
-                            url: '/api/v1/contrib/contracts/resources/' + biblionumber,
-                            method: 'GET',
+                        url: '/api/v1/biblios/' + biblionumber + '/items',
+                        method: "GET",
+                    }).success(function(result){
+                        $.ajax({
+                            url: '/api/v1/contrib/contracts/resources/',
+                            method: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                permission_id: permission_id,
+                                biblionumber: biblionumber
+                            }),
+                        }).success(function(result){
+                            success.push({
+                                biblionumber: biblionumber
+                            });
+
+                        processed++;
+                        if (processed === biblionumbers.length) {
+                            success.forEach(function( item ) {
+                                $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Added</td></tr>`)
+                            });
+                        }
+
+                        }).fail(function(err){
+                            let errorMsg = 'Failed to add resource';
+                            // Parse different error types
+                            if (err.status === 404) {
+                                errorMsg = 'Biblionumber not found';
+                            } else if (err.status === 409) {
+                                errorMsg = 'Already linked to this permission';
+                            } else if (err.responseJSON && err.responseJSON.error) {
+                                errorMsg = err.responseJSON.error;
+                            } else if (err.responseText) {
+                                try {
+                                    let errData = JSON.parse(err.responseText);
+                                    errorMsg = errData.error || errData.message || errorMsg;
+                                } catch(e) {
+                                    errorMsg = err.responseText;
+                                }
+                            }
+                            errors.push({
+                                biblionumber: biblionumber,
+                                error: errorMsg, 
+                            });
+
+                            processed++;
+                            if (processed === biblionumbers.length) {
+                                errors.forEach(function( item ) {
+                                    $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Failed</td></tr>`)
+                                });
+                            }
                         });
-                        console.log(results);
+                        console.log(result);
+                    }).fail(function(err){
+                        errors.push({
+                            biblionumber: biblionumber,
+                        });
+                        errors.forEach(function( item ) {
+                            $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Biblio not found</td></tr>`)
+                        });
                     });
+                    $('#batch_add_results').show();
+                    $('#confirm_batch_biblios').show();
                 });
             },
             edit_contract:  function(element){
