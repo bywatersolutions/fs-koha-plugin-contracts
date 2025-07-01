@@ -135,6 +135,45 @@
             </div>
         </div>
     </div>
+    <div id="batch_assign_biblios_modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Batch assign resources ( Permission #<span class="perm_number"></span> )</h1>
+                <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+            </div>
+            <div id="batch_perm_number" class="modal-body">
+            <div id="biblist">
+                <fieldset class="rows">
+                    <ol>
+                        <li>
+                            <label for="bibliolist">Biblio list (one biblionumber per line): </label>
+                            <textarea rows="10" cols="30" id="bibliolist" name="bibliolist"></textarea>
+                        </li>
+                    </ol>
+                </fieldset>
+            </div>
+            <div id="loading" style="display:none;">Processing...</div>
+            <div id="batch_add_results" style="display:none;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Biblionumber</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <button id="submit_batch_biblios" type="submit" class="btn btn-default btn-primary btn-xs">Submit</button>
+            <button id="confirm_batch_biblios" style="display:none;" class="btn btn-default btn-primary btn-xs">Continue</button>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
+            </div>
+        </div>
+    </div>
 
 [% MACRO jsinclude BLOCK %]
     [% Asset.js("js/admin-menu.js") | $raw %]
@@ -267,7 +306,9 @@
                                        perms += '<a class="btn btn-default btn-xs link_resource" data-biblionumber="[% biblionumber %]" data-permission_id="'+e.permission_id+'">Link to bib ([% biblionumber | html %])</a>';
                                     }
                                 [% END %]
-                                perms += '</ul></br><hr>';
+                                perms += '</ul>';
+                                perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch assign resources</a></div>';
+                                perms += '<br/><hr/>';
                             });
                             return perms;
                         },
@@ -428,7 +469,24 @@
             $("body").on('click', '.show_extra_resources',function() {
                 $(this).closest('ul').children('.extra_resource').toggle();
             });
-                
+            $("#batch_assign_biblios_modal").on('shown.bs.modal', function(e) {
+                let button = $(e.relatedTarget);
+                let permission_id = button.data('permission_id');
+                $(".perm_number").text(permission_id)
+                $("#biblist").show();
+
+                $('#submit_batch_biblios').data('permission_id', permission_id);
+
+                $("#bibliolist").val('').focus();
+                $("#batch_results").hide().empty();
+                $("#submit_batch_biblios").show();
+            });
+            $("#submit_batch_biblios").click(function() {
+                ContractFunctions.batch_assign_biblios();
+            });
+            $("#confirm_batch_biblios").click(function() {
+                location.reload() 
+            });
 
         });
 
@@ -499,7 +557,100 @@
                         humanMsg.displayAlert( _("There was an error linking the resource") + err.responseText, { className: 'humanError' } );
                     });
             },
+            batch_assign_biblios: function() {
+                $('#submit_batch_biblios').hide();
+                $('#biblist').hide();
+                $('#loading').show();
+                $('#batch_add_results').hide();
+                let permission_id = $("#submit_batch_biblios").data('permission_id');
+                let bibliolist = $("#bibliolist").val();
+                let biblionumbers = bibliolist
+                    .split('\n')
+                    .map(num => num.trim())
+                    .filter(num => num !== '' && !isNaN(num));
 
+                //reporting arrays
+                let errors = [];
+                let success = [];
+
+                let processed = 0;
+                biblionumbers.forEach(function(biblionumber){
+                    $.ajax({
+                        url: '/api/v1/biblios/' + biblionumber + '/items',
+                        method: "GET",
+                    }).success(function(result){
+                        $.ajax({
+                            url: '/api/v1/contrib/contracts/resources/',
+                            method: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                permission_id: permission_id,
+                                biblionumber: biblionumber
+                            }),
+                        }).success(function(result){
+                            success.push({
+                                biblionumber: biblionumber
+                            });
+
+                        processed++;
+                        if (processed === biblionumbers.length) {
+                            success.forEach(function( item ) {
+                                $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Added</td></tr>`)
+                            });
+                            $('#loading').hide();
+                            $('#batch_add_results').show();
+                        }
+
+                        }).fail(function(err){
+                            let errorMsg = 'Failed to add resource';
+                            // Parse different error types
+                            if (err.status === 404) {
+                                errorMsg = 'Biblionumber not found';
+                            } else if (err.status === 409) {
+                                errorMsg = 'Already linked to this permission';
+                            } else if (err.responseJSON && err.responseJSON.error) {
+                                errorMsg = err.responseJSON.error;
+                            } else if (err.responseText) {
+                                try {
+                                    let errData = JSON.parse(err.responseText);
+                                    errorMsg = errData.error || errData.message || errorMsg;
+                                } catch(e) {
+                                    errorMsg = err.responseText;
+                                }
+                            }
+                            errors.push({
+                                biblionumber: biblionumber,
+                                error: errorMsg, 
+                            });
+
+                            processed++;
+                            if (processed === biblionumbers.length) {
+                                errors.forEach(function( item ) {
+                                    $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Failed</td></tr>`)
+                                });
+                                $('#loading').hide();
+                                $('#batch_add_results').show();
+                            }
+                        });
+                    }).fail(function(err){
+                        errors.push({
+                            biblionumber: biblionumber,
+                        });
+                        $('#batch_add_results tbody').append(`<tr><td>${biblionumber}</td><td>Biblio not found</td></tr>`);
+
+
+                        processed++;
+                        if (processed === biblionumbers.length) {
+                            success.forEach(function( item ) {
+                                $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Added</td></tr>`);
+                            });
+                        $('#loading').hide();
+                        $('#batch_add_results').show();
+                        }
+                    });
+                    $('#confirm_batch_biblios').show();
+                });
+            },
             edit_contract:  function(element){
                 let contract_id = $(element).data('contract_id');
                 let contract_number = $(element).data('contract_number');
@@ -765,7 +916,6 @@
 
 
         function save_contract(id,contract_number,rvn,users){
-            console.log(rvn)
             let options = {
                 url: '/api/v1/contrib/contracts/contracts/' + id,
                 method: "PUT",
