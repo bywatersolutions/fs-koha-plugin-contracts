@@ -153,6 +153,7 @@
                     </ol>
                 </fieldset>
             </div>
+            <div id="loading" style="display:none;">Processing...</div>
             <div id="batch_add_results" style="display:none;">
                 <table class="table">
                     <thead>
@@ -472,6 +473,7 @@
                 let button = $(e.relatedTarget);
                 let permission_id = button.data('permission_id');
                 $(".perm_number").text(permission_id)
+                $("#biblist").show();
 
                 $('#submit_batch_biblios').data('permission_id', permission_id);
 
@@ -558,6 +560,8 @@
             batch_assign_biblios: function() {
                 $('#submit_batch_biblios').hide();
                 $('#biblist').hide();
+                $('#loading').show();
+                $('#batch_add_results').hide();
                 let permission_id = $("#submit_batch_biblios").data('permission_id');
                 let bibliolist = $("#bibliolist").val();
                 let biblionumbers = bibliolist
@@ -593,6 +597,8 @@
                             success.forEach(function( item ) {
                                 $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Added</td></tr>`)
                             });
+                            $('#loading').hide();
+                            $('#batch_add_results').show();
                         }
 
                         }).fail(function(err){
@@ -622,18 +628,26 @@
                                 errors.forEach(function( item ) {
                                     $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Failed</td></tr>`)
                                 });
+                                $('#loading').hide();
+                                $('#batch_add_results').show();
                             }
                         });
-                        console.log(result);
                     }).fail(function(err){
                         errors.push({
                             biblionumber: biblionumber,
                         });
-                        errors.forEach(function( item ) {
-                            $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Biblio not found</td></tr>`)
-                        });
+                        $('#batch_add_results tbody').append(`<tr><td>${biblionumber}</td><td>Biblio not found</td></tr>`);
+
+
+                        processed++;
+                        if (processed === biblionumbers.length) {
+                            success.forEach(function( item ) {
+                                $('#batch_add_results tbody').append(`<tr><td>${item.biblionumber}</td><td>Added</td></tr>`);
+                            });
+                        $('#loading').hide();
+                        $('#batch_add_results').show();
+                        }
                     });
-                    $('#batch_add_results').show();
                     $('#confirm_batch_biblios').show();
                 });
             },
@@ -902,7 +916,6 @@
 
 
         function save_contract(id,contract_number,rvn,users){
-            console.log(rvn)
             let options = {
                 url: '/api/v1/contrib/contracts/contracts/' + id,
                 method: "PUT",
