@@ -137,40 +137,81 @@
     </div>
     <div id="batch_assign_biblios_modal" class="modal" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1>Batch assign resources ( Permission #<span class="perm_number"></span> )</h1>
-                <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1>Batch assign resources ( Permission #<span class="perm_number"></span> )</h1>
+                    <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+                </div>
+                <div id="batch_perm_number" class="modal-body">
+                <div id="biblist">
+                    <fieldset class="rows">
+                        <ol>
+                            <li>
+                                <label for="bibliolist">Biblio list (one biblionumber per line): </label>
+                                <textarea rows="10" cols="30" id="bibliolist" name="bibliolist"></textarea>
+                            </li>
+                        </ol>
+                    </fieldset>
+                </div>
+                <div id="loading" style="display:none;">Processing...</div>
+                <div id="batch_add_results" style="display:none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Biblionumber</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <button id="submit_batch_biblios" type="submit" class="btn btn-default btn-primary btn-xs">Submit</button>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirm_batch_biblios" style="display:none;" class="btn btn-default btn-primary btn-xs">Continue</button>
+                </div>
             </div>
-            <div id="batch_perm_number" class="modal-body">
-            <div id="biblist">
-                <fieldset class="rows">
-                    <ol>
-                        <li>
-                            <label for="bibliolist">Biblio list (one biblionumber per line): </label>
-                            <textarea rows="10" cols="30" id="bibliolist" name="bibliolist"></textarea>
-                        </li>
-                    </ol>
-                </fieldset>
-            </div>
-            <div id="loading" style="display:none;">Processing...</div>
-            <div id="batch_add_results" style="display:none;">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Biblionumber</th>
-                            <th>Result</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <button id="submit_batch_biblios" type="submit" class="btn btn-default btn-primary btn-xs">Submit</button>
-            <button id="confirm_batch_biblios" style="display:none;" class="btn btn-default btn-primary btn-xs">Continue</button>
-            </div>
-            <div class="modal-footer">
-                <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
+        </div>
+    </div>
+
+    <div id="batch_remove_biblios_modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1>Batch remove resources ( Permission #<span class="perm_number"></span> )</h1>
+                    <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+                </div>
+                <div class="modal-body">
+                    <table id="remove_biblios_list" class="table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select_all_remove"></th>
+                                <th>Biblionumber</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div id="loading2" style="display:none;">Processing...</div>
+                    <div id="batch_remove_results" style="display:none;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Biblionumber</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button id="submit_batch_remove" type="submit" class="btn btn-default btn-primary btn-xs">Remove resources</button>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirm_batch_biblios2" style="display:none;" class="btn btn-default btn-primary btn-xs">Continue</button>
+                </div>
             </div>
         </div>
     </div>
@@ -307,7 +348,8 @@
                                     }
                                 [% END %]
                                 perms += '</ul>';
-                                perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch assign resources</a></div>';
+                                perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch add resources</a></div>';
+                                perms += '<div><a class="btn btn-default btn-xs batch_remove_resources" data-bs-toggle="modal" data-bs-target="#batch_remove_biblios_modal" data-permission_id="'+e.permission_id+'">Batch remove resources</a></div>';
                                 perms += '<br/><hr/>';
                             });
                             return perms;
@@ -328,11 +370,11 @@
                                         init_hidden = 'class="extra_resource" style="display:none;"'
                                         more_button = true;
                                     }
-                                    resources += '<li '+init_hidden+'><ul class="contract_resource">';
-                                    resources += '<li>' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+ r.biblionumber + '">';
+                                    resources += '<li '+init_hidden+'><ul class="contract_resource" data-resource_id="'+r.resource_id+'" data-permission_id="'+e.permission_id+'" data-biblionumber="'+ r.biblionumber + '" data-title="'+r.biblio.title+'" data-author="'+r.biblio.author+'"">';
+                                    resources += '<li class="title">' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+ r.biblionumber + '">';
                                     resources += (r.biblio?r.biblio.title:'Title not found');
                                     resources += "(" + r.biblionumber + ")</a></li>";
-                                    resources += "<li>" + (r.biblio?(r.biblio.author?r.biblio.author:"-"):"-") + "</li>";
+                                    resources += "<li class='author'>" + (r.biblio?(r.biblio.author?r.biblio.author:"-"):"-") + "</li>";
                                     resources += '</ul></li>';
                                 });
                                 if( more_button ){
@@ -469,6 +511,7 @@
             $("body").on('click', '.show_extra_resources',function() {
                 $(this).closest('ul').children('.extra_resource').toggle();
             });
+
             $("#batch_assign_biblios_modal").on('shown.bs.modal', function(e) {
                 let button = $(e.relatedTarget);
                 let permission_id = button.data('permission_id');
@@ -481,10 +524,43 @@
                 $("#batch_results").hide().empty();
                 $("#submit_batch_biblios").show();
             });
+
+            $("#batch_remove_biblios_modal").on('shown.bs.modal', function(e) {
+                let button = $(e.relatedTarget);
+                let permission_id = button.data('permission_id');
+                $("#batch_remove_biblios_modal .perm_number").text(permission_id);
+                $("#batch_remove_biblios_modal .perm_number").attr('data-permission_id', permission_id);
+                
+                $('#remove_biblios_list tbody').empty();
+                $("#batch_remove_perm_number").text(permission_id).data('permission_id', permission_id);
+                $(`.contract_resource[data-permission_id="${permission_id}"]`).each(function() {
+                    let title =  $(this).data('title');
+                    let author = $(this).data('author');
+                    let biblionumber = $(this).data('biblionumber');
+                    let resource_id = $(this).data('resource_id');
+
+                    $('#remove_biblios_list tbody').append(`
+                        <tr>
+                            <td><input type="checkbox" class="remove_resource" data-biblionumber="${biblionumber}" data-permission_id="${permission_id}" data-resource_id="${resource_id}"></td>
+                            <td>${biblionumber}</td>
+                            <td>${title}</td>
+                            <td>${author}</td>
+                        </tr>
+                    `);
+                });
+
+            });
+
             $("#submit_batch_biblios").click(function() {
                 ContractFunctions.batch_assign_biblios();
             });
+            $("#submit_batch_remove").click(function() {
+                ContractFunctions.batch_remove_biblios();
+            });
             $("#confirm_batch_biblios").click(function() {
+                location.reload() 
+            });
+            $("#confirm_batch_biblios2").click(function() {
                 location.reload() 
             });
 
@@ -650,6 +726,70 @@
                     });
                     $('#confirm_batch_biblios').show();
                 });
+            },
+            batch_remove_biblios: function() {
+                $('#loading2').show();
+                $('#batch_remove_results').show();
+                $('#remove_biblios_list').hide();
+                $('#submit_batch_remove').hide();
+                let permission_id = $("#batch_remove_biblios_modal .perm_number").data('permission_id');
+                let selected = [];
+
+                //reporting arrays
+                $('.remove_resource:checked').each(function() {
+                    let biblionumber = $(this).data('biblionumber');
+                    let permission_id = $(this).data('permission_id');
+                    let resource_id = $(this).data('resource_id');
+
+                    selected.push({
+                        biblionumber: biblionumber,
+                        permission_id: permission_id,
+                        resource_id: resource_id
+                    });
+                });
+
+                if (selected.length === 0) {
+                    humanMsg.displayAlert(_("Please select at least one resource to remove"), { className: 'humanError' });
+                    return;
+                }
+
+    
+                let processed = 0;
+                let results = { success: [], errors: [] };
+                
+                // Delete each selected resource
+                selected.forEach(function(item) {
+                    $.ajax({
+                        url: '/api/v1/contrib/contracts/resources/' + item.resource_id,
+                        method: 'DELETE'
+                    }).success(function() {
+                        results.success.push(item);
+                        processed++;
+                        if (processed === selected.length) {
+                            results.success.forEach( function(result) {
+                                $('#batch_remove_results tbody').append(`<tr><td>${result.biblionumber}</td><td>Removed</td></tr>`);
+                            });
+                            $('#remove_biblios_list').hide();
+                            $('#loading2').hide();
+                            $('#batch_remove_results').show();
+                        }
+                    }).fail(function(err) {
+                        results.errors.push({
+                            biblionumber: item.biblionumber,
+                            error: err.responseJSON?.error || 'Failed to remove'
+                        });
+                        processed++;
+                        if (processed === selected.length) {
+                            results.errors.forEach( function(result) {
+                                $('#batch_remove_results tbody').append(`<tr><td>${result.biblionumber}</td><td>Failed to removed</td></tr>`);
+                            });
+                        }
+                        $('#loading2').hide();
+                        $('#batch_remove_results').show();
+                    });
+                    $('#confirm_batch_biblios2').show();
+                });
+
             },
             edit_contract:  function(element){
                 let contract_id = $(element).data('contract_id');
