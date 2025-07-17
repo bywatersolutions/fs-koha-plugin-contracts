@@ -366,13 +366,15 @@
                                 let init_hidden = "";
                                 let more_button = false;
                                 e.resources.forEach(function(r,index){
+                                    let this_title = r.biblio ? r.biblio.title : 'Title not found';
+                                    let this_author = r.biblio ? r.biblio.author : ' - ';
                                     if( index > 2 ){ 
                                         init_hidden = 'class="extra_resource" style="display:none;"'
                                         more_button = true;
                                     }
-                                    resources += '<li '+init_hidden+'><ul class="contract_resource" data-resource_id="'+r.resource_id+'" data-permission_id="'+e.permission_id+'" data-biblionumber="'+ r.biblionumber + '" data-title="'+r.biblio.title+'" data-author="'+r.biblio.author+'"">';
+                                    resources += '<li '+init_hidden+'><ul class="contract_resource" data-resource_id="'+r.resource_id+'" data-permission_id="'+e.permission_id+'" data-biblionumber="'+ r.biblionumber + '" data-title="'+this_title+'" data-author="'+this_author+'"">';
                                     resources += '<li class="title">' + '<a target="_blank" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+ r.biblionumber + '">';
-                                    resources += (r.biblio?r.biblio.title:'Title not found');
+                                    resources += this_title;
                                     resources += "(" + r.biblionumber + ")</a></li>";
                                     resources += "<li class='author'>" + (r.biblio?(r.biblio.author?r.biblio.author:"-"):"-") + "</li>";
                                     resources += '</ul></li>';
