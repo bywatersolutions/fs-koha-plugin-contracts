@@ -216,6 +216,33 @@
         </div>
     </div>
 
+    <div id="move_permission_modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1>Move Permission #<span id="move_permission_id"></span> to Another Contract</h1>
+                    <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+                </div>
+                <div class="modal-body">
+                    <fieldset class="rows">
+                        <ol>
+                            <li>
+                                <label for="target_contract_select">Select target contract:</label>
+                                <select id="target_contract_select" name="target_contract_select"></select>
+                            </li>
+                        </ol>
+                    </fieldset>
+                    <div id="move_results"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="submit_move_permission">Move Permission</button>
+                    <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 [% MACRO jsinclude BLOCK %]
     [% Asset.js("js/admin-menu.js") | $raw %]
     [% Asset.css("css/humanmsg.css") | $raw %]
@@ -350,6 +377,7 @@
                                 perms += '</ul>';
                                 perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch add resources</a></div>';
                                 perms += '<div><a class="btn btn-default btn-xs batch_remove_resources" data-bs-toggle="modal" data-bs-target="#batch_remove_biblios_modal" data-permission_id="'+e.permission_id+'">Batch remove resources</a></div>';
+                                perms += '<div><a class="btn btn-default btn-xs move_permission" data-bs-toggle="modal" data-bs-target="#move_permission_modal" data-permission_id="'+e.permission_id+'" data-contract_id="'+e.contract_id+'">Move permission to new contract</a></div>';
                                 perms += '<br/><hr/>';
                             });
                             return perms;
@@ -553,6 +581,48 @@
 
             });
 
+            $("#move_permission_modal").on('shown.bs.modal', function(e) {
+                let button = $(e.relatedTarget);
+                let permission_id = button.data('permission_id');
+                let current_contract_id = button.data('contract_id');
+                $("#move_permission_id").text(permission_id);
+                $("#move_permission_id").attr('data-permission_id', permission_id);
+
+                $("#target_contract_select").kohaSelect({
+                    width: '100%',
+                    allowClear: false,
+                    dropdownParent: $('#move_permission_modal'),
+                    ajax: {
+                        url: '/api/v1/contrib/contracts/contracts',
+                        delay: 300,
+                        cache: true,
+                        dataType: 'json',
+                        data: function (params) {
+                            var search_term = (params.term === undefined) ? '' : params.term;
+                            var query = {
+                                "q": JSON.stringify({"contract_number":{"-like":'%'+search_term+'%'}}),
+                                "_order_by": "contract_number",
+                                "_page": params.page
+                            };
+                            return query;
+                        },
+                        processResults: function (data) {
+                            var results = [];
+                            data.results.forEach( function ( contract ) {
+                                if (contract.contract_id != current_contract_id) {
+                                    results.push({
+                                        "id": "" + contract.contract_id,
+                                        "text": contract.contract_number + ' (' + contract.contract_id + ')'
+                                    });
+                                }
+                            });
+                            return { "results": results, "pagination": { "more": data.pagination.more } };
+                        }
+                    }
+                });
+            });
+
+
             $("#submit_batch_biblios").click(function() {
                 ContractFunctions.batch_assign_biblios();
             });
@@ -564,6 +634,9 @@
             });
             $("#confirm_batch_biblios2").click(function() {
                 location.reload() 
+            });
+            $("#submit_move_permission").click(function() {
+                ContractFunctions.move_permissions();
             });
 
         });
@@ -1052,10 +1125,58 @@
                             altInputClass: "permission_edit_date flatpickr-input",
                             dateFormat: "Y-m-d"
                         });
+           },
+           move_permissions: function( permissions ){
+                let permission_id = $("#move_permission_id").data('permission_id');
+                let target_contract_id = $("#target_contract_select").val();
+
+                if (!target_contract_id) {
+                    humanMsg.displayAlert(_("Please select a target contract"), { className: 'humanError' });
+                    return;
+                }
+
+                $("#submit_move_permission").hide();
+                $("#move_results").html('<div class="alert alert-info">Moving permission...</div>');
+
+                // First get the current permission data
+                $.ajax({
+                    url: '/api/v1/contrib/contracts/permissions/' + permission_id,
+                    method: 'GET'
+                }).success(function(permission) {
+
+                    let permission_date = permission.permission_date;
+                    if (permission_date && permission_date.includes('T')) {
+                        permission_date = permission_date.split('T')[0];
+                    }
+                    console.log('Current perm:', permission_id);
+                    console.log('Target perm:', target_contract_id);
+                    $.ajax({
+                        url: '/api/v1/contrib/contracts/permissions/' + permission_id,
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            contract_id: parseInt(target_contract_id),
+                            permission_type: permission.permission_type || "",
+                            permission_date: permission_date || "",
+                            permission_code: permission.permission_code || "",
+                            form_signed: permission.form_signed ? 1 : 0,
+                            note: "TEST - moved to contract 2",
+                        })
+                    }).success(function(result) {
+                        $("#move_results").html('<div class="alert alert-success">Permission successfully moved!</div>');
+                        setTimeout(function() {
+                            $("#move_permission_modal").modal('hide');
+                            contracts_table.DataTable().ajax.reload();
+                        }, 1500);
+                    }).fail(function(err) {
+                        let errorMsg = err.responseJSON?.error || 'Failed to move permission';
+                        $("#move_results").html('<div class="alert alert-danger">Error: ' + errorMsg + '</div>');
+                        $("#submit_move_permission").show();
+                    });
+                });
            }
 
         };
-
 
         function save_contract(id,contract_number,rvn,users){
             let options = {
