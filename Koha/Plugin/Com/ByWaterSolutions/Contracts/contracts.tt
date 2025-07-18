@@ -18,6 +18,9 @@
     #loading span {
         margin-bottom: 10px;
     }
+    .table_controls {
+        justify-content: flex-start !important;
+    }
   </style>
 </head>
 
@@ -100,12 +103,10 @@
                             <li>
                                 <label  for="rvn">RVN:</label>
                                 <textarea id="rvn" name="rvn" rows="5" cols="40" class="contract_update"></textarea>
-                                </select>
                             </li>
                             <li>
                                 <label  for="users">Users:</label>
                                 <textarea id="users" name="users" rows="5" cols="40" class="contract_update"></textarea>
-                                </select>
                             </li>
                         </ul>
                         <div id="contract_updated"></div>
@@ -207,10 +208,14 @@
                     <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
                 </div>
                 <div class="modal-body">
+                    <div class="table_controls">
+                        <button class="btn btn-link SelectAll" data-tab="holdings"><i class="fa fa-check"></i> Select all</button>
+                        <button class="btn btn-link ClearAll" data-tab="holdings"><i class="fa fa-times"></i> Clear all</button>
+                    </div>
                     <table id="remove_biblios_list" class="table">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" id="select_all_remove"></th>
+                                <th></th>
                                 <th>Biblionumber</th>
                                 <th>Title</th>
                                 <th>Author</th>
@@ -421,7 +426,7 @@
                         "data": "permissions.resources.biblionumber:permissions.resources.resource_id:permissions.resources.biblio.title:permissions.resources.biblio.author",
                         "searchable": true,
                         "orderable": true,
-                        "render": function( data, type, row, meta ) {i
+                        "render": function( data, type, row, meta ) {
                             var resources ="";
                             row.permissions.forEach(function(e){
                                 resources += '<ul title="Permission '+e.permission_id+'">';
@@ -624,6 +629,17 @@
                     `);
                 });
 
+            });
+            $('.SelectAll').on('click' , function() {
+                $('#batch_remove_biblios_modal .remove_resource').each( function() {
+                    $(this).prop('checked', true );
+                });
+            });
+
+            $('.ClearAll').on('click' , function() {
+                $('#batch_remove_biblios_modal .remove_resource').each( function() {
+                    $(this).prop('checked', false );
+                });
             });
 
             $("#move_permission_modal").on('shown.bs.modal', function(e) {
