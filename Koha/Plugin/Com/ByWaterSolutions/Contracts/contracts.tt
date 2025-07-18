@@ -5,6 +5,23 @@
 [% INCLUDE 'doc-head-open.inc' %]
   <title>Koha: Contracts plugin: Search contracts</title>
   [% INCLUDE 'doc-head-close.inc' %]
+  <style>
+    #loading, #loading2 {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 16pt;
+        font-weight: bold;
+    }
+
+    #loading span {
+        margin-bottom: 10px;
+    }
+    .table_controls {
+        justify-content: flex-start !important;
+    }
+  </style>
 </head>
 
 <body id="plugin_contracts">
@@ -86,12 +103,10 @@
                             <li>
                                 <label  for="rvn">RVN:</label>
                                 <textarea id="rvn" name="rvn" rows="5" cols="40" class="contract_update"></textarea>
-                                </select>
                             </li>
                             <li>
                                 <label  for="users">Users:</label>
                                 <textarea id="users" name="users" rows="5" cols="40" class="contract_update"></textarea>
-                                </select>
                             </li>
                         </ul>
                         <div id="contract_updated"></div>
@@ -153,7 +168,17 @@
                         </ol>
                     </fieldset>
                 </div>
-                <div id="loading" style="display:none;">Processing...</div>
+                <div id="loading" style="display:none;">
+                    <span>Processing...</span>
+                    <svg width="135" height="135" viewBox="0 0 135 135" xmlns="http://www.w3.org/2000/svg" fill="#cecece">
+                        <path d="M67.447 58c5.523 0 10-4.477 10-10s-4.477-10-10-10-10 4.477-10 10 4.477 10 10 10zm9.448 9.447c0 5.523 4.477 10 10 10 5.522 0 10-4.477 10-10s-4.478-10-10-10c-5.523 0-10 4.477-10 10zm-9.448 9.448c-5.523 0-10 4.477-10 10 0 5.522 4.477 10 10 10s10-4.478 10-10c0-5.523-4.477-10-10-10zM58 67.447c0-5.523-4.477-10-10-10s-10 4.477-10 10 4.477 10 10 10 10-4.477 10-10z">
+                            <animateTransform attributeName="transform" type="rotate" from="0 67 67" to="-360 67 67" dur="2.5s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M28.19 40.31c6.627 0 12-5.374 12-12 0-6.628-5.373-12-12-12-6.628 0-12 5.372-12 12 0 6.626 5.372 12 12 12zm30.72-19.825c4.686 4.687 12.284 4.687 16.97 0 4.686-4.686 4.686-12.284 0-16.97-4.686-4.687-12.284-4.687-16.97 0-4.687 4.686-4.687 12.284 0 16.97zm35.74 7.705c0 6.627 5.37 12 12 12 6.626 0 12-5.373 12-12 0-6.628-5.374-12-12-12-6.63 0-12 5.372-12 12zm19.822 30.72c-4.686 4.686-4.686 12.284 0 16.97 4.687 4.686 12.285 4.686 16.97 0 4.687-4.686 4.687-12.284 0-16.97-4.685-4.687-12.283-4.687-16.97 0zm-7.704 35.74c-6.627 0-12 5.37-12 12 0 6.626 5.373 12 12 12s12-5.374 12-12c0-6.63-5.373-12-12-12zm-30.72 19.822c-4.686-4.686-12.284-4.686-16.97 0-4.686 4.687-4.686 12.285 0 16.97 4.686 4.687 12.284 4.687 16.97 0 4.687-4.685 4.687-12.283 0-16.97zm-35.74-7.704c0-6.627-5.372-12-12-12-6.626 0-12 5.373-12 12s5.374 12 12 12c6.628 0 12-5.373 12-12zm-19.823-30.72c4.687-4.686 4.687-12.284 0-16.97-4.686-4.686-12.284-4.686-16.97 0-4.687 4.686-4.687 12.284 0 16.97 4.686 4.687 12.284 4.687 16.97 0z">
+                            <animateTransform attributeName="transform" type="rotate" from="0 67 67" to="360 67 67" dur="8s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>
+                </div>
                 <div id="batch_add_results" style="display:none;">
                     <table class="table">
                         <thead>
@@ -166,10 +191,10 @@
                         </tbody>
                     </table>
                 </div>
-                <button id="submit_batch_biblios" type="submit" class="btn btn-default btn-primary btn-xs">Submit</button>
                 </div>
                 <div class="modal-footer">
-                    <button id="confirm_batch_biblios" style="display:none;" class="btn btn-default btn-primary btn-xs">Continue</button>
+                    <button type="button" class="btn btn-primary" id="submit_batch_biblios">Submit</button>
+                    <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Close</a>
                 </div>
             </div>
         </div>
@@ -183,10 +208,14 @@
                     <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
                 </div>
                 <div class="modal-body">
+                    <div class="table_controls">
+                        <button class="btn btn-link SelectAll" data-tab="holdings"><i class="fa fa-check"></i> Select all</button>
+                        <button class="btn btn-link ClearAll" data-tab="holdings"><i class="fa fa-times"></i> Clear all</button>
+                    </div>
                     <table id="remove_biblios_list" class="table">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" id="select_all_remove"></th>
+                                <th></th>
                                 <th>Biblionumber</th>
                                 <th>Title</th>
                                 <th>Author</th>
@@ -194,7 +223,17 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <div id="loading2" style="display:none;">Processing...</div>
+                    <div id="loading2" style="display:none;">
+                    <span>Processing...</span>
+                    <svg width="135" height="135" viewBox="0 0 135 135" xmlns="http://www.w3.org/2000/svg" fill="#cecece">
+                        <path d="M67.447 58c5.523 0 10-4.477 10-10s-4.477-10-10-10-10 4.477-10 10 4.477 10 10 10zm9.448 9.447c0 5.523 4.477 10 10 10 5.522 0 10-4.477 10-10s-4.478-10-10-10c-5.523 0-10 4.477-10 10zm-9.448 9.448c-5.523 0-10 4.477-10 10 0 5.522 4.477 10 10 10s10-4.478 10-10c0-5.523-4.477-10-10-10zM58 67.447c0-5.523-4.477-10-10-10s-10 4.477-10 10 4.477 10 10 10 10-4.477 10-10z">
+                            <animateTransform attributeName="transform" type="rotate" from="0 67 67" to="-360 67 67" dur="2.5s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M28.19 40.31c6.627 0 12-5.374 12-12 0-6.628-5.373-12-12-12-6.628 0-12 5.372-12 12 0 6.626 5.372 12 12 12zm30.72-19.825c4.686 4.687 12.284 4.687 16.97 0 4.686-4.686 4.686-12.284 0-16.97-4.686-4.687-12.284-4.687-16.97 0-4.687 4.686-4.687 12.284 0 16.97zm35.74 7.705c0 6.627 5.37 12 12 12 6.626 0 12-5.373 12-12 0-6.628-5.374-12-12-12-6.63 0-12 5.372-12 12zm19.822 30.72c-4.686 4.686-4.686 12.284 0 16.97 4.687 4.686 12.285 4.686 16.97 0 4.687-4.686 4.687-12.284 0-16.97-4.685-4.687-12.283-4.687-16.97 0zm-7.704 35.74c-6.627 0-12 5.37-12 12 0 6.626 5.373 12 12 12s12-5.374 12-12c0-6.63-5.373-12-12-12zm-30.72 19.822c-4.686-4.686-12.284-4.686-16.97 0-4.686 4.687-4.686 12.285 0 16.97 4.686 4.687 12.284 4.687 16.97 0 4.687-4.685 4.687-12.283 0-16.97zm-35.74-7.704c0-6.627-5.372-12-12-12-6.626 0-12 5.373-12 12s5.374 12 12 12c6.628 0 12-5.373 12-12zm-19.823-30.72c4.687-4.686 4.687-12.284 0-16.97-4.686-4.686-12.284-4.686-16.97 0-4.687 4.686-4.687 12.284 0 16.97 4.686 4.687 12.284 4.687 16.97 0z">
+                            <animateTransform attributeName="transform" type="rotate" from="0 67 67" to="360 67 67" dur="8s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>
+                    </div>
                     <div id="batch_remove_results" style="display:none;">
                         <table class="table">
                             <thead>
@@ -207,14 +246,41 @@
                             </tbody>
                         </table>
                     </div>
-                    <button id="submit_batch_remove" type="submit" class="btn btn-default btn-primary btn-xs">Remove resources</button>
                 </div>
                 <div class="modal-footer">
-                    <button id="confirm_batch_biblios2" style="display:none;" class="btn btn-default btn-primary btn-xs">Continue</button>
+                    <button type="button" class="btn btn-primary" id="submit_batch_remove">Remove selected resources</button>
+                    <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Cancel</a>
                 </div>
             </div>
         </div>
     </div>
+
+    <div id="move_permission_modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1>Move Permission #<span id="move_permission_id"></span> to Another Contract</h1>
+                    <button type="button" class="closebtn" data-bs-dismiss="modal" aria-hidden="true">x</button>
+                </div>
+                <div class="modal-body">
+                    <div id="move_results"></div>
+                    <fieldset class="rows">
+                        <ol>
+                            <li>
+                                <label for="target_contract_select">Select target contract:</label>
+                                <select id="target_contract_select" name="target_contract_select"></select>
+                            </li>
+                        </ol>
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="submit_move_permission">Move Permission</button>
+                    <a href="#" data-bs-dismiss="modal" aria-hidden="true" class="cancel">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 [% MACRO jsinclude BLOCK %]
     [% Asset.js("js/admin-menu.js") | $raw %]
@@ -348,8 +414,9 @@
                                     }
                                 [% END %]
                                 perms += '</ul>';
-                                perms += '<div><a class="btn btn-default btn-xs batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch add resources</a></div>';
-                                perms += '<div><a class="btn btn-default btn-xs batch_remove_resources" data-bs-toggle="modal" data-bs-target="#batch_remove_biblios_modal" data-permission_id="'+e.permission_id+'">Batch remove resources</a></div>';
+                                perms += '<div class="btn-group"><a class="btn dropdown-toggle show" data-bs-toggle="dropdown" href="#" aria-expanded="true"><i class="fa fa-plus"></i> Permissions actions</a><ul class="dropdown-menu"><li><a class="btn btn-default dropdown-item batch_add_resources" data-bs-toggle="modal" data-bs-target="#batch_assign_biblios_modal" data-permission_id="'+e.permission_id+'">Batch add resources</a></li>';
+                                perms += '<div><li><a class="btn btn-default dropdown-item batch_remove_resources" data-bs-toggle="modal" data-bs-target="#batch_remove_biblios_modal" data-permission_id="'+e.permission_id+'">Batch remove resources</a></li>';
+                                perms += '<div><li><a class="btn btn-default dropdown-item move_permission" data-bs-toggle="modal" data-bs-target="#move_permission_modal" data-permission_id="'+e.permission_id+'" data-contract_id="'+e.contract_id+'">Move permission to new contract</a></ul></li></div>';
                                 perms += '<br/><hr/>';
                             });
                             return perms;
@@ -359,7 +426,7 @@
                         "data": "permissions.resources.biblionumber:permissions.resources.resource_id:permissions.resources.biblio.title:permissions.resources.biblio.author",
                         "searchable": true,
                         "orderable": true,
-                        "render": function( data, type, row, meta ) {i
+                        "render": function( data, type, row, meta ) {
                             var resources ="";
                             row.permissions.forEach(function(e){
                                 resources += '<ul title="Permission '+e.permission_id+'">';
@@ -527,7 +594,18 @@
                 $("#submit_batch_biblios").show();
             });
 
+            $("#batch_assign_biblios_modal").on('hidden.bs.modal', function(e) {
+                $('#contracts_table').DataTable().ajax.reload();
+            });
+            $("#batch_remove_biblios_modal").on('hidden.bs.modal', function(e) {
+                $('#contracts_table').DataTable().ajax.reload();
+            });
+            $("#move_permission_modal").on('hidden.bs.modal', function(e) {
+                $('#contracts_table').DataTable().ajax.reload();
+            });
+
             $("#batch_remove_biblios_modal").on('shown.bs.modal', function(e) {
+                $("#move_results").hide();
                 let button = $(e.relatedTarget);
                 let permission_id = button.data('permission_id');
                 $("#batch_remove_biblios_modal .perm_number").text(permission_id);
@@ -552,6 +630,61 @@
                 });
 
             });
+            $('.SelectAll').on('click' , function() {
+                $('#batch_remove_biblios_modal .remove_resource').each( function() {
+                    $(this).prop('checked', true );
+                });
+            });
+
+            $('.ClearAll').on('click' , function() {
+                $('#batch_remove_biblios_modal .remove_resource').each( function() {
+                    $(this).prop('checked', false );
+                });
+            });
+
+            $("#move_permission_modal").on('shown.bs.modal', function(e) {
+                $("#submit_move_permission").show();
+                $('#move_results').hide();
+                let button = $(e.relatedTarget);
+                let permission_id = button.data('permission_id');
+                let current_contract_id = button.data('contract_id');
+                $("#move_permission_id").text(permission_id);
+                $("#move_permission_id").attr('data-permission_id', permission_id);
+
+                $("#target_contract_select").kohaSelect({
+                    width: '50%',
+                    allowClear: false,
+                    dropdownParent: $('#move_permission_modal'),
+                    ajax: {
+                        url: '/api/v1/contrib/contracts/contracts',
+                        delay: 300,
+                        cache: true,
+                        dataType: 'json',
+                        data: function (params) {
+                            var search_term = (params.term === undefined) ? '' : params.term;
+                            var query = {
+                                "q": JSON.stringify({"contract_number":{"-like":'%'+search_term+'%'}}),
+                                "_order_by": "contract_number",
+                                "_page": params.page
+                            };
+                            return query;
+                        },
+                        processResults: function (data) {
+                            var results = [];
+                            data.results.forEach( function ( contract ) {
+                                if (contract.contract_id != current_contract_id) {
+                                    results.push({
+                                        "id": "" + contract.contract_id,
+                                        "text": contract.contract_number + ' (' + contract.contract_id + ')'
+                                    });
+                                }
+                            });
+                            return { "results": results, "pagination": { "more": data.pagination.more } };
+                        }
+                    }
+                });
+            });
+
 
             $("#submit_batch_biblios").click(function() {
                 ContractFunctions.batch_assign_biblios();
@@ -559,11 +692,8 @@
             $("#submit_batch_remove").click(function() {
                 ContractFunctions.batch_remove_biblios();
             });
-            $("#confirm_batch_biblios").click(function() {
-                location.reload() 
-            });
-            $("#confirm_batch_biblios2").click(function() {
-                location.reload() 
+            $("#submit_move_permission").click(function() {
+                ContractFunctions.move_permissions();
             });
 
         });
@@ -1052,10 +1182,53 @@
                             altInputClass: "permission_edit_date flatpickr-input",
                             dateFormat: "Y-m-d"
                         });
+           },
+           move_permissions: function( permissions ){
+                let permission_id = $("#move_permission_id").data('permission_id');
+                let target_contract_id = $("#target_contract_select").val();
+
+                if (!target_contract_id) {
+                    humanMsg.displayAlert(_("Please select a target contract"), { className: 'humanError' });
+                    return;
+                }
+
+                $("#submit_move_permission").hide();
+                $("#move_results").show();
+                $("#move_results").html('<div class="alert alert-info">Moving permission...</div>');
+
+                // First get the current permission data
+                $.ajax({
+                    url: '/api/v1/contrib/contracts/permissions/' + permission_id,
+                    method: 'GET'
+                }).success(function(permission) {
+
+                    let permission_date = permission.permission_date;
+                    if (permission_date && permission_date.includes('T')) {
+                        permission_date = permission_date.split('T')[0];
+                    }
+                    $.ajax({
+                        url: '/api/v1/contrib/contracts/permissions/' + permission_id,
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            contract_id: parseInt(target_contract_id),
+                            permission_type: permission.permission_type || "",
+                            permission_date: permission_date || "",
+                            permission_code: permission.permission_code || "",
+                            form_signed: permission.form_signed ? 1 : 0,
+                            note: permission.note || "",
+                        })
+                    }).success(function(result) {
+                        $("#move_results").html('<div class="alert alert-success">Permission successfully moved</div>');
+                    }).fail(function(err) {
+                        let errorMsg = err.responseJSON?.error || 'Failed to move permission';
+                        $("#move_results").html('<div class="alert alert-danger">Error: ' + errorMsg + '</div>');
+                        $("#submit_move_permission").show();
+                    });
+                });
            }
 
         };
-
 
         function save_contract(id,contract_number,rvn,users){
             let options = {
