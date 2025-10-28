@@ -58,7 +58,7 @@ if( $("#catalog_detail").length > 0 ){
             }
     });
     
-    $('#select_all').on('click' , function(e) {
+    $('#select_all_plugin').on('click' , function(e) {
         e.preventDefault();
         $("input.resource_info").each(function() {
             if ($(this).prop("checked") == false) {
