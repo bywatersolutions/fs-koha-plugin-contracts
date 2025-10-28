@@ -258,7 +258,7 @@ sub intranet_head {
                     </div>
                     <div class="modal-body">
                     <div>
-                        <a href="#" class="btn btn-link" id="select_all"><i class="fa fa-check"></i> Select all</a>
+                        <a href="#" class="btn btn-link" id="select_all_plugin"><i class="fa fa-check"></i> Select all</a>
                         <a href="#" class="btn btn-link" id="clear_all"><i class="fa fa-check"></i> Clear all</a>
                         <a href="#" class="btn btn-link" id="select_all_linked"><i class="fa fa-check"></i> Select all LINKED</a>
                         <a href="#" class="btn btn-link" id="select_all_unlinked"><i class="fa fa-check"></i> Select all UNLINKED</a>
