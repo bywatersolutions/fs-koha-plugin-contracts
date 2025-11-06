@@ -1,3 +1,4 @@
+
 if( $("#acq_booksellers").length > 0 ){
 
     let getVendorIdFromPath = function() {
@@ -50,6 +51,7 @@ if( $("#acq_booksellers").length > 0 ){
                     }
                     result +=      '</li>';
                 });
+
             });
             result +=    '</ul>';
             result +=    '</fieldset></td></tr>';
@@ -74,10 +76,11 @@ if( $("#acq_booksellers").length > 0 ){
                 $("#vendor_contracts").append('<table id="contracts_table">');
                 add_contract_data( result );
             } else {}
-                
         })
         .fail(function(err){
              console.log( _("There was an error fetching the resources") + err.responseText );
         });
 
 }
+
+                
