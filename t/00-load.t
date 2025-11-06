@@ -24,13 +24,6 @@ use File::Find;
 =head1 DESCRIPTION
 =cut
 
-my $lib = '/var/lib/koha/kohadev/plugins'; # Could be changed to $Bin/..
-
-unshift( @INC, $lib );
-unshift( @INC, '/kohadevbox/koha/' );
-unshift( @INC, '/kohadevbox/koha/misc/translator/' );
-unshift( @INC, '/kohadevbox/koha/t/lib/' );
-
 find(
     {
         bydepth  => 1,

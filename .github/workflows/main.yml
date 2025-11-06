@@ -67,17 +67,18 @@ jobs:
         export KTD_HOME=$(pwd)
         ktd --name fscontracts --wait-ready 120
 
-    - name: Copy plugin to KTD container
+    - name: Install plugins in KTD
       run: |
         export KTD_HOME=$(pwd)/../koha-testing-docker
-        docker cp . fscontracts-koha-1:/kohadevbox/plugins/${{ env.GITHUB_REPO }}
+        ktd --name fscontracts --shell --run "cd /kohadevbox/koha && perl misc/devel/install_plugins.pl"
 
     - name: Run plugin tests
       run: |
         export KTD_HOME=$(pwd)/../koha-testing-docker
         ktd --name fscontracts --shell --run "
-          cd /kohadevbox/plugins/${{ env.GITHUB_REPO }} &&
-          prove -v t/
+          cd /kohadevbox/plugins/fscontracts &&
+          export PERL5LIB=\$PERL5LIB:Koha/Plugin/Com/ByWaterSolutions/Contracts/lib:. &&
+          prove -v -r -s t/
         "
     - name: Show logs on failure
       if: failure()
