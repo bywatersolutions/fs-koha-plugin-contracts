@@ -70,7 +70,7 @@ jobs:
     - name: Copy plugin to KTD container
       run: |
         export KTD_HOME=$(pwd)/../koha-testing-docker
-        docker cp ${{ env.GITHUB_REPO }}/. fscontracts-koha-1:/kohadevbox/plugins/${{ env.GITHUB_REPO }}
+        docker cp . fscontracts-koha-1:/kohadevbox/plugins/${{ env.GITHUB_REPO }}
 
     - name: Run plugin tests
       run: |
