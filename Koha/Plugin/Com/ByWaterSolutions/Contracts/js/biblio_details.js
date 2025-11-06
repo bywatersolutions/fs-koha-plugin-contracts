@@ -87,7 +87,7 @@ if( $("#catalog_detail").length > 0 ){
         });
     });
 
-    $('#clear_all').on('click' , function(e) {
+    $('#clear_all_plugin').on('click' , function(e) {
         e.preventDefault();
         $("input.resource_info").each(function() {
             if ($(this).prop("checked") == true) {
