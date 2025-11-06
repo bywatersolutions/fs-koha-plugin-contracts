@@ -1,18 +1,13 @@
-if( $("#acq_supplier").length > 0 ){
+if( $("#acq_booksellers").length > 0 ){
 
-    let getUrlParameter = function getUrlParameter(sParam) {
-    let sPageURL = window.location.search.substring(1),
-            sURLVariables = sPageURL.split('&'),
-            sParameterName,
-            i;
-        for (i = 0; i < sURLVariables.length; i++) {
-            sParameterName = sURLVariables[i].split('=');
-            if (sParameterName[0] === sParam) {
-                return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
-            }
-        }
-	};
-    $("main").append('<div id="vendor_contracts"></div>');
+    let getVendorIdFromPath = function() {
+        let path = window.location.pathname;
+        // Match pattern: /acquisition/vendors/{id}
+        let match = path.match(/\/acquisition\/vendors\/(\d+)/);
+        return match ? match[1] : null;
+    };
+
+    $("body").append('<div id="vendor_contracts" class="offset-md-2"></div>');
     function add_contract_data(contracts){
         $.each(contracts,function(index,contract){
             let result = '<tr><td class="contract"><fieldset>';
@@ -61,7 +56,9 @@ if( $("#acq_supplier").length > 0 ){
             $("#contracts_table").append(result);
         });
     }
-    let vendor_id = getUrlParameter('booksellerid');
+
+    let vendor_id = getVendorIdFromPath();
+
     let options = {
         url: '/api/v1/contrib/contracts/contracts',
         method: "GET",
