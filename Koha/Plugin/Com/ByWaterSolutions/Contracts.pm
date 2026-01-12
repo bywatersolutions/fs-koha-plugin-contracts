@@ -325,7 +325,7 @@ sub api_namespace {
     return 'contracts';
 }
 
-sub sync_contract_with_resource {
+sub add_marc_to_contract {
     my ( $self, $params ) = @_;
     my $resource = $params->{resource};
 
@@ -380,6 +380,41 @@ sub sync_contract_with_resource {
     }
 
 
+    return 1;
+}
+
+sub remove_marc_from_contract {
+    my ( $self, $params ) = @_;
+    my $biblionumber = $params->{biblionumber};
+    my $contract_number = $params->{contract_number};
+    
+    return unless $biblionumber;
+    return unless $contract_number;
+    
+    my $biblio = Koha::Biblios->find($biblionumber);
+    unless ($biblio) {
+        return;
+    }
+    
+    my $record = $biblio->metadata->record;
+    
+    # Find and remove the 542 field with this contract_number
+    my @existing_542 = $record->field('542');
+    my $removed = 0;
+    
+    foreach my $field (@existing_542) {
+        my $existing_s = $field->subfield('s');
+        if ($existing_s && $existing_s eq $contract_number) {
+            $record->delete_field($field);
+            $removed = 1;
+        }
+    }
+    
+    # Only save if we actually removed something
+    if ($removed) {
+        C4::Biblio::ModBiblio($record, $biblionumber);
+    }
+    
     return 1;
 }
 
