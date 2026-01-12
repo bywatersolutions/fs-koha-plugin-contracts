@@ -325,4 +325,62 @@ sub api_namespace {
     return 'contracts';
 }
 
+sub sync_contract_with_resource {
+    my ( $self, $params ) = @_;
+    my $resource = $params->{resource};
+
+    my $permission = $resource->permission;
+    my $contract = $permission->contract;
+    my $biblionumber = $resource->biblionumber;
+  
+    my $biblio = Koha::Biblios->find($biblionumber);
+
+    #if we cannot find a biblio its time to bail 
+    unless ( $biblio ) {
+        return;
+    }
+
+    my $contract_number = $contract->contract_number;
+
+    my $record = $biblio->metadata->record;
+    my @existing_542 = $record->field('542');
+
+    #here we check if this contract already has a 542$s or not
+    my $already_exists = 0;
+
+    foreach my $field (@existing_542) {
+        my $existing_s = $field->subfield('s');
+        if ($existing_s && $existing_s eq $contract_number) {
+            $already_exists = 1;
+            warn "MARC SYNC: 542\$s with '$contract_number' already exists, skipping";
+            last;
+        }
+    }
+
+
+    unless ( $already_exists ) {
+        #get RVN data and permission code 
+        my $rvn = $contract->rvn;
+        my $permission_code = $permission->permission_code;
+
+        my @subfields;
+        push @subfields, ('q' => $rvn) if $rvn;
+        push @subfields, ('r' => $permission_code) if $permission_code;
+        push @subfields, ('s' => $contract_number) if $contract_number;
+
+        my $field_542 = MARC::Field->new(
+            '542',
+            ' ',
+            ' ',
+            @subfields
+        );
+
+        $record->insert_fields_ordered($field_542);
+        C4::Biblio::ModBiblio($record, $biblionumber);
+    }
+
+
+    return 1;
+}
+
 1;

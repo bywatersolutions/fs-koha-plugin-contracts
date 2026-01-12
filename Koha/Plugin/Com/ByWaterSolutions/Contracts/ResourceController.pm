@@ -91,6 +91,9 @@ sub add_resource {
         $resource->store;
         _update_contract($resource, $patron);
 
+        # Sync to contract data to MARC 542 fields
+        Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_contract_with_resource({ resource => $resource });
+
         return $c->render(
             status  => 200,
             openapi => $resource
