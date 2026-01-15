@@ -443,13 +443,16 @@ sub sync_all_resources_for_contract {
 sub sync_all_permission_for_contract {
     my ( $self, $params ) = @_;
     my $permission_id = $params->{permission_id};
+    my $old_contract_number = $params->{old_contract_number};
     
     my $resources = Koha::ContractResources->search({ permission_id => $permission_id });
     while (my $resource = $resources->next) {
-        $self->add_marc_to_contract({ resource => $resource });
+        $self->add_marc_to_contract({ 
+            resource => $resource,
+            old_contract_number => $old_contract_number 
+        });
     }
     
     return 1;
 }
-
 1;
