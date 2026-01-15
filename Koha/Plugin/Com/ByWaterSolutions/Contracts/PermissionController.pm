@@ -125,7 +125,7 @@ sub update_permission {
 
         _update_contract( $permission, $patron );
 
-
+        Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_all_permission_for_contract({ permission_id => $permission_id });
 
         return $c->render(
             status  => 200,

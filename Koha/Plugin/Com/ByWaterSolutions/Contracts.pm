@@ -328,11 +328,12 @@ sub api_namespace {
 sub add_marc_to_contract {
     my ( $self, $params ) = @_;
     my $resource = $params->{resource};
+    my $old_contract_number = $params->{old_contract_number};
 
     my $permission = $resource->permission;
     my $contract = $permission->contract;
     my $biblionumber = $resource->biblionumber;
-  
+
     my $biblio = Koha::Biblios->find($biblionumber);
 
     #if we cannot find a biblio its time to bail 
@@ -345,29 +346,32 @@ sub add_marc_to_contract {
     my $record = $biblio->metadata->record;
     my @existing_542 = $record->field('542');
 
-    #here we check if this contract already has a 542$s or not
-    my $already_exists = 0;
-
+    # Remove any existing 542 with this contract_number
     foreach my $field (@existing_542) {
         my $existing_s = $field->subfield('s');
-        if ($existing_s && $existing_s eq $contract_number) {
-            $already_exists = 1;
-            warn "MARC SYNC: 542\$s with '$contract_number' already exists, skipping";
-            last;
+        warn "DEBUG: Found existing 542 with \$s = " . ($existing_s || 'UNDEF');
+
+        if ($existing_s && (
+            $existing_s eq $contract_number ||
+            ($old_contract_number && $existing_s eq $old_contract_number)
+        )) {
+            warn "DEBUG: DELETING 542 with \$s = $existing_s";
+            $record->delete_field($field);
+        } else {
+            warn "DEBUG: NOT deleting 542 with \$s = $existing_s";
         }
     }
 
+    # get the current RVN and permission
+    my $rvn = $contract->rvn;
+    my $permission_code = $permission->permission_code;
 
-    unless ( $already_exists ) {
-        #get RVN data and permission code 
-        my $rvn = $contract->rvn;
-        my $permission_code = $permission->permission_code;
+    my @subfields;
+    push @subfields, ('q' => $rvn) if $rvn;
+    push @subfields, ('r' => $permission_code) if $permission_code;
+    push @subfields, ('s' => $contract_number) if $contract_number;
 
-        my @subfields;
-        push @subfields, ('q' => $rvn) if $rvn;
-        push @subfields, ('r' => $permission_code) if $permission_code;
-        push @subfields, ('s' => $contract_number) if $contract_number;
-
+    if (@subfields) {
         my $field_542 = MARC::Field->new(
             '542',
             ' ',
@@ -378,7 +382,6 @@ sub add_marc_to_contract {
         $record->insert_fields_ordered($field_542);
         C4::Biblio::ModBiblio($record, $biblionumber);
     }
-
 
     return 1;
 }
@@ -413,6 +416,37 @@ sub remove_marc_from_contract {
     # Only save if we actually removed something
     if ($removed) {
         C4::Biblio::ModBiblio($record, $biblionumber);
+    }
+    
+    return 1;
+}
+
+sub sync_all_resources_for_contract {
+    my ( $self, $params ) = @_;
+    my $contract_id = $params->{contract_id};
+    my $old_contract_number = $params->{old_contract_number};
+    
+    my $permissions = Koha::ContractPermissions->search({ contract_id => $contract_id });
+    while (my $permission = $permissions->next) {
+        my $resources = Koha::ContractResources->search({ permission_id => $permission->permission_id });
+        while (my $resource = $resources->next) {
+            $self->add_marc_to_contract({ 
+                resource => $resource,
+                old_contract_number => $old_contract_number 
+            });
+        }
+    }
+
+    return 1;
+}
+
+sub sync_all_permission_for_contract {
+    my ( $self, $params ) = @_;
+    my $permission_id = $params->{permission_id};
+    
+    my $resources = Koha::ContractResources->search({ permission_id => $permission_id });
+    while (my $resource = $resources->next) {
+        $self->add_marc_to_contract({ resource => $resource });
     }
     
     return 1;

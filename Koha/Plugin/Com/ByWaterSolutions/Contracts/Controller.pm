@@ -129,6 +129,9 @@ sub update_contract {
     return try {
         my $contract = Koha::Contracts->find({ contract_id => $contract_id });
 
+        # retain old contract number before updaing 
+        my $old_contract_number = $contract->contract_number;
+
         $contract->contract_number( $contract_number ) if $contract_number;
         $contract->supplier_id( $supplier_id ) if $supplier_id;
         $contract->rvn( $rvn ) if $rvn;
@@ -137,6 +140,10 @@ sub update_contract {
         $contract->store;
         $contract->discard_changes;
 
+        Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_all_resources_for_contract({
+            contract_id => $contract_id,
+            old_contract_number => $old_contract_number
+        });
 
         return $c->render(
             status  => 200,
@@ -163,9 +170,20 @@ sub delete_contract {
     return try {
         my $contract = Koha::Contracts->find({ contract_id => $contract_id });
 
+        my $contract_number = $contract->contract_number;
+
         my $permissions = $contract->permissions;
         while ( my $permission = $permissions->next ){
             my $resources = $permission->resources;
+            
+            #when deleting a contract all 542 data should be deleted from connected resourses/bibs
+            while ( my $resource = $resources->next ) {
+                Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->remove_marc_from_contract({
+                    biblionumber => $resource->biblionumber,
+                    contract_number => $contract_number
+                });
+            }
+
             $resources->delete;
             $permission->delete;
         }
