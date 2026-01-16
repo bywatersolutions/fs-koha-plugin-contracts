@@ -349,16 +349,13 @@ sub add_marc_to_contract {
     # Remove any existing 542 with this contract_number
     foreach my $field (@existing_542) {
         my $existing_s = $field->subfield('s');
-        warn "DEBUG: Found existing 542 with \$s = " . ($existing_s || 'UNDEF');
 
         if ($existing_s && (
             $existing_s eq $contract_number ||
             ($old_contract_number && $existing_s eq $old_contract_number)
         )) {
-            warn "DEBUG: DELETING 542 with \$s = $existing_s";
             $record->delete_field($field);
         } else {
-            warn "DEBUG: NOT deleting 542 with \$s = $existing_s";
         }
     }
 
