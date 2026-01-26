@@ -346,22 +346,26 @@ sub add_marc_to_contract {
     my $record = $biblio->metadata->record;
     my @existing_542 = $record->field('542');
 
-    # Remove any existing 542 with this contract_number
-    foreach my $field (@existing_542) {
-        my $existing_s = $field->subfield('s');
-
-        if ($existing_s && (
-            $existing_s eq $contract_number ||
-            ($old_contract_number && $existing_s eq $old_contract_number)
-        )) {
-            $record->delete_field($field);
-        } else {
-        }
-    }
-
     # get the current RVN and permission
     my $rvn = $contract->rvn;
     my $permission_code = $permission->permission_code;
+
+    # Remove any existing 542 with this contract_number AND permission_code
+    foreach my $field (@existing_542) {
+        my $existing_s = $field->subfield('s');
+        my $existing_r = $field->subfield('r');
+
+        # check if the 542s match the contract number AND does the 542r match the contracts permssion 
+        my $matches_current_contract = ($existing_s eq $contract_number && $existing_r eq $permission_code);
+    
+        # check if the 542s match the OLD contract number when moving permissions between contracts
+        my $matches_old_contract = ($old_contract_number && $existing_s eq $old_contract_number && $existing_r eq $permission_code);
+
+        #if either of the above checks are true, delete
+        if ( $matches_current_contract || $matches_old_contract ) {
+            $record->delete_field($field);
+        }
+    }
 
     my @subfields;
     push @subfields, ('q' => $rvn) if $rvn;
@@ -387,6 +391,7 @@ sub remove_marc_from_contract {
     my ( $self, $params ) = @_;
     my $biblionumber = $params->{biblionumber};
     my $contract_number = $params->{contract_number};
+    my $permission_code = $params->{permission_code};
     
     return unless $biblionumber;
     return unless $contract_number;
@@ -401,10 +406,24 @@ sub remove_marc_from_contract {
     # Find and remove the 542 field with this contract_number
     my @existing_542 = $record->field('542');
     my $removed = 0;
-    
+   
     foreach my $field (@existing_542) {
         my $existing_s = $field->subfield('s');
-        if ($existing_s && $existing_s eq $contract_number) {
+        my $existing_r = $field->subfield('r');
+        
+        #set a flag to see if we should remove
+        my $should_remove = 0;
+
+        if ($permission_code) {
+        # Removing specific permission: match both contract number AND permission code
+        my $matches_contract = ($existing_s && $existing_s eq $contract_number);
+        my $matches_permission = ($existing_r && $existing_r eq $permission_code);
+        
+        $should_remove = ($matches_contract && $matches_permission);
+        } else {
+            $should_remove = ($existing_s && $existing_s eq $contract_number);
+        }
+        if ( $should_remove ) {
             $record->delete_field($field);
             $removed = 1;
         }

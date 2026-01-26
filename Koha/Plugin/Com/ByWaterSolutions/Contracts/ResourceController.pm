@@ -156,6 +156,8 @@ sub delete_resource {
         # prior to deleteing we should save some info. for de-syncing the 542 field
         my $biblionumber = $resource->biblionumber;
         my $contract_number = $resource->permission->contract->contract_number;
+        my $permission_code = $resource->permission->permission_code;
+
 
         $resource->delete;
 
@@ -164,7 +166,8 @@ sub delete_resource {
         # if deleting a resourse from a contarct we need to also removed MARC 542 entry
         Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->remove_marc_from_contract({
             biblionumber => $biblionumber,
-            contract_number => $contract_number
+            contract_number => $contract_number,
+            permission_code => $permission_code,
         });
 
         return $c->render(
