@@ -56,6 +56,40 @@ sub biblio {
     return Koha::Biblio->_new_from_dbic( $rs );
 }
 
+=head3 sync_to_marc
+
+Syncs this resource's contract data to the biblio's MARC 542 field
+
+=cut
+
+sub sync_to_marc {
+    my ($self) = @_;
+    
+    my $plugin = Koha::Plugin::Com::ByWaterSolutions::Contracts->new();
+    return $plugin->add_marc_to_contract({ resource => $self });
+}
+
+=head3 remove_from_marc
+
+Removes this resource's contract data from the biblio's MARC 542 field
+
+=cut
+
+sub remove_from_marc {
+    my ($self) = @_;
+    
+    my $biblionumber = $self->biblionumber;
+    my $contract_number = $self->permission->contract->contract_number;
+    my $permission_code = $self->permission->permission_code;
+    
+    my $plugin = Koha::Plugin::Com::ByWaterSolutions::Contracts->new();
+    return $plugin->remove_marc_from_contract({
+        biblionumber => $biblionumber,
+        contract_number => $contract_number,
+        permission_code => $permission_code
+    });
+}
+
 =head2 Internal methods
 
 =head3 _type

@@ -128,8 +128,6 @@ sub update_contract {
 
     return try {
         my $contract = Koha::Contracts->find({ contract_id => $contract_id });
-
-        # retain old contract number before updaing 
         my $old_contract_number = $contract->contract_number;
 
         $contract->contract_number( $contract_number ) if $contract_number;
@@ -140,10 +138,8 @@ sub update_contract {
         $contract->store;
         $contract->discard_changes;
 
-        Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_all_resources_for_contract({
-            contract_id => $contract_id,
-            old_contract_number => $old_contract_number
-        });
+        # Sync contract data to MARC 542 fields
+        $contract->sync_to_marc({old_contract_number => $old_contract_number});
 
         return $c->render(
             status  => 200,

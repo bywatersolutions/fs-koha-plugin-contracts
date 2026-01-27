@@ -119,8 +119,9 @@ sub update_permission {
     return try {
         my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
         
-        #save the old contract ID
+        #save the old contract ID and old permissions 
         my $old_contract_id = $permission->contract_id;
+        my $old_permission_code = $permission->permission_code;
 
         $permission->permission_type( $permission_type ) if $permission_type;
         $permission->permission_code( $permission_code ) if $permission_code;
@@ -133,28 +134,21 @@ sub update_permission {
 
         _update_contract( $permission, $patron );
 
-        #if we are moving a permission from one contract to another sync the MARC 542 data with the new contract    
+        # If moving permission to different contract
         if ($contract_id && $old_contract_id && $contract_id != $old_contract_id) {
-
-            # save the old old contract stuff first
+            # Sync the old contract (removes this permission's resources)
             my $old_contract = Koha::Contracts->find({ contract_id => $old_contract_id });
             my $old_contract_number = $old_contract->contract_number if $old_contract;
+            $old_contract->sync_to_marc() if $old_contract;
             
-            # sync the old contract
-            Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_all_resources_for_contract({ 
-                contract_id => $old_contract_id 
-            });
-            
-            # sync the new contract 
-            Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_all_permission_for_contract({ 
-                permission_id => $permission_id,
-                old_contract_number => $old_contract_number 
+            # Sync the new contract (adds this permission's resources with old contract number for removal)
+            $permission->sync_to_marc({ 
+                old_permission_code => $old_permission_code,
+                old_contract_number => $old_contract_number
             });
         } else {
-            # not moving permission from one contract to another, just sync the permission 
-            Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_all_permission_for_contract({ 
-                permission_id => $permission_id 
-            });
+            # Just updating permission, not moving
+            $permission->sync_to_marc({ old_permission_code => $old_permission_code });
         }
 
         return $c->render(

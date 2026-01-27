@@ -92,7 +92,7 @@ sub add_resource {
         _update_contract($resource, $patron);
 
         # Sync to contract data to MARC 542 fields
-        Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->add_marc_to_contract({ resource => $resource });
+        $resource->sync_to_marc();
 
         return $c->render(
             status  => 200,
@@ -149,26 +149,14 @@ sub delete_resource {
             openapi => { error => "You are not allowed" }
         );
     }
-
     return try {
         my $resource = Koha::ContractResources->find({ resource_id => $resource_id });
 
-        # prior to deleteing we should save some info. for de-syncing the 542 field
-        my $biblionumber = $resource->biblionumber;
-        my $contract_number = $resource->permission->contract->contract_number;
-        my $permission_code = $resource->permission->permission_code;
-
-
-        $resource->delete;
-
-        _update_contract($resource, $patron);
+        # Remove from MARC before deleting the resource
+        $resource->remove_from_marc();
         
-        # if deleting a resourse from a contarct we need to also removed MARC 542 entry
-        Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->remove_marc_from_contract({
-            biblionumber => $biblionumber,
-            contract_number => $contract_number,
-            permission_code => $permission_code,
-        });
+        $resource->delete();
+        _update_contract($resource, $patron);
 
         return $c->render(
             status  => 204,
