@@ -325,4 +325,193 @@ sub api_namespace {
     return 'contracts';
 }
 
+sub add_marc_to_contract {
+    my ( $self, $params ) = @_;
+    my $resource = $params->{resource};
+
+    my $permission = $resource->permission;
+    my $contract = $permission->contract;
+    my $biblionumber = $resource->biblionumber;
+
+    my $biblio = Koha::Biblios->find($biblionumber);
+
+    # If we cannot find a biblio its time to bail 
+    unless ( $biblio ) {
+        return;
+    }
+
+    my $contract_number = $contract->contract_number;
+    my $rvn = $contract->rvn;
+    my $permission_code = $permission->permission_code;
+
+    my $record = $biblio->metadata->record;
+    my @existing_542 = $record->field('542');
+
+    # Remove any existing 542 with this exact contract_number AND permission_code
+    foreach my $field (@existing_542) {
+        my $existing_s = $field->subfield('s');
+        my $existing_r = $field->subfield('r');
+
+        next unless $existing_s && $existing_r;
+
+        # Only remove if BOTH contract number AND permission code match
+        my $matches = ($existing_s eq $contract_number && $existing_r eq $permission_code);
+        
+        if ($matches) {
+            $record->delete_field($field);
+        }
+    }
+
+    # Build the new 542 field
+    my @subfields;
+    push @subfields, ('q' => $rvn) if $rvn;
+    push @subfields, ('r' => $permission_code) if $permission_code;
+    push @subfields, ('s' => $contract_number) if $contract_number;
+
+    if (@subfields) {
+        my $field_542 = MARC::Field->new('542', ' ', ' ', @subfields);
+        $record->insert_fields_ordered($field_542);
+        C4::Biblio::ModBiblio($record, $biblionumber);
+    }
+
+    return 1;
+}
+
+sub remove_marc_from_contract {
+    my ( $self, $params ) = @_;
+    my $biblionumber = $params->{biblionumber};
+    my $contract_number = $params->{contract_number};
+    my $permission_code = $params->{permission_code};
+    
+    return unless $biblionumber;
+    return unless $contract_number;
+    
+    my $biblio = Koha::Biblios->find($biblionumber);
+    unless ($biblio) {
+        return;
+    }
+    
+    my $record = $biblio->metadata->record;
+    
+    # Find and remove the 542 field with this contract_number
+    my @existing_542 = $record->field('542');
+    my $removed = 0;
+   
+    foreach my $field (@existing_542) {
+        my $existing_s = $field->subfield('s');
+        my $existing_r = $field->subfield('r');
+
+        #set a flag to see if we should remove
+        my $should_remove = 0;
+
+        if ($permission_code) {
+        # Removing specific permission: match both contract number AND permission code
+        my $matches_contract = ($existing_s && $existing_s eq $contract_number);
+        my $matches_permission = ($existing_r && $existing_r eq $permission_code);
+        
+        $should_remove = ($matches_contract && $matches_permission);
+        } else {
+            $should_remove = ($existing_s && $existing_s eq $contract_number);
+        }
+        if ( $should_remove ) {
+            $record->delete_field($field);
+            $removed = 1;
+        }
+    }
+    
+    # Only save if we actually removed something
+    if ($removed) {
+        C4::Biblio::ModBiblio($record, $biblionumber);
+    }
+    
+    return 1;
+}
+
+sub sync_all_resources_for_contract {
+    my ( $self, $params ) = @_;
+    my $contract_id = $params->{contract_id};
+    my $old_contract_number = $params->{old_contract_number};
+
+    # get the contract, and if we dont have one, exit. 
+    my $contract = Koha::Contracts->find({ contract_id => $contract_id });
+    return unless $contract;
+   
+    # if we are updating the contract number we need to remove the 542 entries with OLD contract number, if the contract number doesnt change remove the 542s using the current contract number 
+    my $contract_number = $contract->contract_number;
+    my $contract_number_for_removal = $old_contract_number || $contract_number;
+
+    # get unique bibs for the contract, a bib can be linked many times to the same contract but with a different permission  
+    # keep track of biblios that need work done with %biblios_to_clean
+    my %biblios_to_clean;
+    my $permissions = Koha::ContractPermissions->search({ contract_id => $contract_id });
+    while (my $permission = $permissions->next) {
+        my $resources = Koha::ContractResources->search({ permission_id => $permission->permission_id });
+        while (my $resource = $resources->next) {
+            $biblios_to_clean{$resource->biblionumber} = 1;
+        }
+    }
+    
+    # remove all related 542 entries, we will add new ones next
+    foreach my $biblionumber (keys %biblios_to_clean) {
+        $self->remove_marc_from_contract({
+            biblionumber => $biblionumber,
+            contract_number => $contract_number_for_removal
+        });
+    }
+    
+    # add the new and up-to-date 542 entries 
+    $permissions->reset;
+    while (my $permission = $permissions->next) {
+        my $resources = Koha::ContractResources->search({ permission_id => $permission->permission_id });
+        while (my $resource = $resources->next) {
+            $self->add_marc_to_contract({ resource => $resource });
+        }
+    }
+    
+    return 1;
+}
+
+sub sync_all_permission_for_contract {
+    my ( $self, $params ) = @_;
+    my $permission_id = $params->{permission_id};
+    my $old_permission_code = $params->{old_permission_code};
+    my $old_contract_number = $params->{old_contract_number};
+    
+    # Get the permission and contract, if no permission on contract, exit
+    my $permission = Koha::ContractPermissions->find({ permission_id => $permission_id });
+    return unless $permission;
+ 
+    my $contract = $permission->contract;
+    my $contract_number = $contract->contract_number;
+    my $permission_code = $permission->permission_code;
+   
+    #if permission or contract number values change, use the OLD values. If not, use the current/NEW values  
+    my $permission_code_for_removal = $old_permission_code || $permission_code;
+    my $contract_number_for_removal = $old_contract_number || $contract_number;
+ 
+    # Get all biblios
+    my %biblios_to_clean;
+    my $resources = Koha::ContractResources->search({ permission_id => $permission_id });
+    while (my $resource = $resources->next) {
+        $biblios_to_clean{$resource->biblionumber} = 1;
+    }
+
+    # Remove the old 542 entries, to be replaced next 
+    foreach my $biblionumber (keys %biblios_to_clean) {
+        $self->remove_marc_from_contract({
+            biblionumber => $biblionumber,
+            contract_number => $contract_number_for_removal,
+            permission_code => $permission_code_for_removal
+        });
+    }
+
+    # replace with new 542
+    $resources->reset;
+    while (my $resource = $resources->next) {
+        $self->add_marc_to_contract({ resource => $resource });
+    }
+
+    return 1;
+}
+
 1;

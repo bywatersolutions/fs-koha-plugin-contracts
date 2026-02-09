@@ -91,6 +91,9 @@ sub add_resource {
         $resource->store;
         _update_contract($resource, $patron);
 
+        # Sync to contract data to MARC 542 fields
+        $resource->sync_to_marc();
+
         return $c->render(
             status  => 200,
             openapi => $resource
@@ -146,12 +149,13 @@ sub delete_resource {
             openapi => { error => "You are not allowed" }
         );
     }
-
     return try {
         my $resource = Koha::ContractResources->find({ resource_id => $resource_id });
 
-        $resource->delete;
-
+        # Remove from MARC before deleting the resource
+        $resource->remove_from_marc();
+        
+        $resource->delete();
         _update_contract($resource, $patron);
 
         return $c->render(

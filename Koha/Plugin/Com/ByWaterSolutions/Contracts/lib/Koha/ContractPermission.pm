@@ -56,6 +56,23 @@ sub resources {
     return Koha::ContractResources->_new_from_dbic( $rs );
 }
 
+=head3 sync_to_marc
+
+Syncs all resources for this permission to MARC 542 fields
+
+=cut
+
+sub sync_to_marc {
+    my ($self, $params) = @_;
+
+    my $plugin = Koha::Plugin::Com::ByWaterSolutions::Contracts->new();
+    return $plugin->sync_all_permission_for_contract({
+        permission_id => $self->permission_id,
+        old_permission_code => $params->{old_permission_code},
+        old_contract_number => $params->{old_contract_number},
+    });
+}
+
 =head2 Internal methods
 =head3 _type
 =cut
