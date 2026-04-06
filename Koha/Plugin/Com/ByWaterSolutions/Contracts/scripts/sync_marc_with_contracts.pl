@@ -36,7 +36,9 @@ _USAGE_
 
 if ( $confirm ) {
     print "Find all contracts and sync the resourses's 542 data \n";
-    
+
+    my $plugin = Koha::Plugin::Com::ByWaterSolutions::Contracts->new();
+
     my $contracts = Koha::Contracts->search();
     my $total = $contracts->count;
     my $processed = 0;
@@ -51,7 +53,7 @@ if ( $confirm ) {
         print "Processing contract $id ($number)...\n";
         
         try {
-            Koha::Plugin::Com::ByWaterSolutions::Contracts->new()->sync_all_resources_for_contract({ contract_id => $id });
+            $plugin->sync_all_resources_for_contract({ contract_id => $id });
             $processed++;
 
             print "  Synced successfully for $id ($number)\n";
