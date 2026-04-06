@@ -59,7 +59,7 @@ jobs:
       run: |
         cd ../koha-testing-docker
         export KTD_HOME=$(pwd)
-        ktd --name fscontracts --wait-ready 120
+        ktd --name fscontracts --wait-ready 240
 
     - name: Install plugins in KTD
       run: |
