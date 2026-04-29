@@ -1147,7 +1147,7 @@
                             permissions_section += '<li>';
                             permissions_section += '<label for="permission_edit_type">Permission type:</label>';
                             [% IF perm_types.size %]
-                            permissions_section += '<select class="permission_type" name="permission_edit_type" data-initial="'+p.permission_code+'">'
+                            permissions_section += '<select class="permission_type" name="permission_edit_type" data-initial_type="'+p.permission_type+'" data-initial="'+p.permission_code+'">'
                             [% END %]
                             permissions_section += '[% perm_dropdown %]'
                             permissions_section += '</li>';
@@ -1187,10 +1187,12 @@
                             permissions_section += '</div>';
                         });
                         $("#permissions_editor").append(permissions_section);
+
                         $("select.permission_type").each(function(){
-                            let init =$(this).data('initial');
-                            let typesel = $(this).find('option[value="'+init+'"]');
-                            typesel.attr('selected',"selected");
+                            let init_type = $(this).data('initial_type');
+                            $(this).find('option').filter(function(){
+                                return $(this).text() === init_type;
+                            }).prop('selected', true);
                         });
 
                         $('.permission_edit_date').flatpickr({
