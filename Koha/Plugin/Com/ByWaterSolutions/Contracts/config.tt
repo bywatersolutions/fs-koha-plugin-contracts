@@ -1,33 +1,7 @@
-[% USE raw %]
-[% USE Asset %]
 [% SET footerjs = 1 %]
 [% USE AuthorisedValues %]
-[% INCLUDE 'doc-head-open.inc' %]
-  <title>Koha: Contracts plugin: Config</title>
-  [% INCLUDE 'doc-head-close.inc' %]
-</head>
-
-<body id="plugin_contracts_config">
-  [% INCLUDE 'header.inc' %]
-  [% INCLUDE 'cat-search.inc' %]
-
-<nav id="breadcrumbs" aria-label="Breadcrumb" class="breadcrumb">
-    <ol>
-        <li>
-            <a href="/cgi-bin/koha/mainpage.pl">Home</a>
-        </li>
-        <li>
-            <a href="/cgi-bin/koha/plugins/plugins.pl">Plugins</a>
-        </li>
-        <li>
-            <a href="#" aria-current="page">
-                Koha Contracts Config
-            </a>
-        </li>
-    </ol>
-</nav>
-
-<div class="main container-fluid">
+[% WRAPPER "wrapper-staff-tool-plugin.inc" method="configure" plugin_title="Contracts plugin: Config" %]
+<body>
     <div class="row">
         <div class="col-sm-12">
             <main>
@@ -48,7 +22,5 @@
                 [% END %]
             </main>
         </div>
-    </div>
-</div>
-
-[% INCLUDE 'intranet-bottom.inc' %]
+    </body>
+[% END %]

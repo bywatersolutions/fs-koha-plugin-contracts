@@ -1,11 +1,6 @@
-[% USE raw %]
-[% USE Asset %]
-[% SET footerjs = 1 %]
-[% USE AuthorisedValues %]
-[% INCLUDE 'doc-head-open.inc' %]
-  <title>Koha: Contracts plugin: Search contracts</title>
-  [% INCLUDE 'doc-head-close.inc' %]
-  <style>
+[% WRAPPER "wrapper-staff-tool-plugin.inc" method="tool" plugin_title="Contracts Plugin" %]
+
+<style>
     #loading, #loading2 {
         display: flex;
         flex-direction: column;
@@ -25,27 +20,6 @@
 </head>
 
 <body id="plugin_contracts">
-    [% INCLUDE 'header.inc' %]
-    [% INCLUDE 'cat-search.inc' %]
-
-    [% WRAPPER 'sub-header.inc' %]
-        [% WRAPPER breadcrumbs %]
-            [% IF blocking_error %]
-                [% WRAPPER breadcrumb_item bc_active= 1 %]
-                    <span>Plugins</span>
-                [% END %]
-            [% ELSE %]
-                [% WRAPPER breadcrumb_item %]
-                    <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a>
-                [% END %]
-                [% WRAPPER breadcrumb_item bc_active= 1 %]
-                    <span>Contracts plugin</span>
-                [% END %]
-            [% END %]
-        [% END #/ WRAPPER breadcrumbs %]
-    [% END #/ WRAPPER sub-header.inc %]
-
-    <div class="main container-fluid">
         <div class="row">
             <div class="col-sm-12">
                 <main>
@@ -281,13 +255,9 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div
+[% END %]
 
-
-[% MACRO jsinclude BLOCK %]
-    [% Asset.js("js/admin-menu.js") | $raw %]
-    [% Asset.css("css/humanmsg.css") | $raw %]
-    [% Asset.js("lib/jquery/plugins/humanmsg.js") | $raw %]
     [% INCLUDE 'datatables.inc' %]
     [% INCLUDE 'select2.inc' %]
     [% INCLUDE 'calendar.inc' %]
@@ -1273,6 +1243,5 @@
 
 
     </script>
-[% END %]
 
 [% INCLUDE 'intranet-bottom.inc' %]
