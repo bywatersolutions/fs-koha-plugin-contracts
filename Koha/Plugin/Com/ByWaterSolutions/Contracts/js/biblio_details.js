@@ -1,3 +1,7 @@
+if (typeof humanMsg === 'undefined') {
+    window.humanMsg = { displayAlert: function (msg) { alert(msg); } };
+}
+
 if( $("#catalog_detail").length > 0 ){
 
     $("#bibliodetails ul").append('<li class="nav-item" role="presentation"><a id="contracts_tab_title" class="nav-link" href="#contracts_panel" aria-controls="contracts" role="tab" data-bs-toggle="tab">Contracts</a></li>');

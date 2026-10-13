@@ -263,6 +263,9 @@
     [% INCLUDE 'calendar.inc' %]
 
     <script>
+        if (typeof humanMsg === 'undefined') {
+            window.humanMsg = { displayAlert: function (msg) { alert(msg); } };
+        }
         $.getScript("/intranet-tmpl/lib/dayjs/dayjs.min.js");
         let filters_table;
         function tempAlert(id,msg,duration) {

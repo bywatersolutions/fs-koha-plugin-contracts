@@ -347,8 +347,17 @@ sub add_marc_to_contract {
     my $record = $biblio->metadata->record;
     my @existing_542 = $record->field('542');
 
+    #if the 542s, 542r, or 542q did not change, bail. 
+    foreach my $field (@existing_542) {
+        return 1
+            if ( $field->subfield('s') // '' ) eq ( $contract_number // '' )
+            && ( $field->subfield('r') // '' ) eq ( $permission_code // '' )
+            && ( $field->subfield('q') // '' ) eq ( $rvn // '' );
+    }
+
     # Remove any existing 542 with this exact contract_number AND permission_code
     foreach my $field (@existing_542) {
+    
         my $existing_s = $field->subfield('s');
         my $existing_r = $field->subfield('r');
 
@@ -452,13 +461,16 @@ sub sync_all_resources_for_contract {
     }
     
     # remove all related 542 entries, we will add new ones next
-    foreach my $biblionumber (keys %biblios_to_clean) {
-        $self->remove_marc_from_contract({
-            biblionumber => $biblionumber,
-            contract_number => $contract_number_for_removal
-        });
+    my $contract_changed = $old_contract_number && $old_contract_number ne $contract_number;
+
+    if ( $contract_changed ) {
+	    foreach my $biblionumber (keys %biblios_to_clean) {
+		$self->remove_marc_from_contract({
+		    biblionumber => $biblionumber,
+		    contract_number => $contract_number_for_removal
+		});
+	    }
     }
-    
     # add the new and up-to-date 542 entries 
     $permissions->reset;
     while (my $permission = $permissions->next) {
@@ -497,14 +509,18 @@ sub sync_all_permission_for_contract {
     }
 
     # Remove the old 542 entries, to be replaced next 
-    foreach my $biblionumber (keys %biblios_to_clean) {
-        $self->remove_marc_from_contract({
-            biblionumber => $biblionumber,
-            contract_number => $contract_number_for_removal,
-            permission_code => $permission_code_for_removal
-        });
-    }
+    my $perm_changed     = $old_permission_code && $old_permission_code ne $permission_code;
+    my $contract_changed = $old_contract_number && $old_contract_number ne $contract_number;
 
+    if ( $perm_changed || $contract_changed ) {
+	    foreach my $biblionumber (keys %biblios_to_clean) {
+		$self->remove_marc_from_contract({
+		    biblionumber => $biblionumber,
+		    contract_number => $contract_number_for_removal,
+		    permission_code => $permission_code_for_removal
+		});
+	    }
+    }
     # replace with new 542
     $resources->reset;
     while (my $resource = $resources->next) {
